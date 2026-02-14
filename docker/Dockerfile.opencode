@@ -1,0 +1,22 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    ca-certificates \
+    openssh-client \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://opencode.ai/install.sh | bash
+
+RUN mkdir -p /workspace
+
+RUN mkdir -p /root/.ssh && \
+    chmod 700 /root/.ssh && \
+    ssh-keyscan github.com gitlab.com bitbucket.org >> /root/.ssh/known_hosts 2>/dev/null || true
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]

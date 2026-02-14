@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-orchestrator-config
+  namespace: agent-orchestrator
+data:
+  server-password: "changeme"

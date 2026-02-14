@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-sdlc-orchestrator"
+version = "0.1.0"
+description = "K8s-based async agent orchestration for Agentic SDLC"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Lior Kanfi", email = "lior@tikalk.com"}
+]
+keywords = ["agentic-sdlc", "kubernetes", "opencode", "async", "orchestration"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    "pyyaml",
+    "python-dateutil",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "black",
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+agentic-sdlc-orchestrator = "agentic_sdlc_orchestrator.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+agentic_sdlc_orchestrator = "src/agentic_sdlc_orchestrator"
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+
+[tool.mypy]
+python_version = "3.9"

@@ -130,8 +130,25 @@ specify init my-project --async-agent agentic-sdlc-orchestrator
 
 ### Spawn a Task Pod
 
+**Option 1: Using the helper script (Recommended)**
+
 ```bash
-# Using kubectl directly
+# Using the Helm-based spawn-pod.sh script
+./scripts/spawn-pod.sh task-001 specs/feature/task-001-async https://github.com/user/repo
+
+# With SSH authentication
+SSH_SECRET_NAME=github-deploy-key ./scripts/spawn-pod.sh task-001 specs/feature/task-001-async git@github.com:user/repo.git
+
+# Production environment
+ENVIRONMENT=prod ./scripts/spawn-pod.sh task-001 specs/feature/task-001-async https://github.com/user/repo
+
+# Stream logs
+./scripts/tail-logs.sh agent-task-001
+```
+
+**Option 2: Using kubectl directly**
+
+```bash
 kubectl run agent-task-001 \
   --image=agentic-sdlc/opencode:0.1.0 \
   --restart=Never \
@@ -143,6 +160,15 @@ kubectl run agent-task-001 \
 # Stream logs
 kubectl logs -f agent-task-001 -n agent-orchestrator-dev
 ```
+
+### Helper Scripts
+
+| Script | Purpose | Location |
+|--------|---------|----------|
+| `spawn-pod.sh` | Creates K8s pod using Helm templates | `scripts/spawn-pod.sh` |
+| `tail-logs.sh` | Streams pod logs to stdout | `scripts/tail-logs.sh` |
+
+See [scripts/README.md](scripts/README.md) for detailed usage.
 
 ### Environment Variables
 
@@ -233,19 +259,23 @@ agentic-sdlc-orchestrator/
 │           ├── configmap.yaml
 │           ├── external-secret.yaml
 │           └── pod-template.yaml
-└── releases/
-    ├── agentic-sdlc-orchestrator-dev/
-    │   ├── Chart.yaml
+├── releases/
+│   ├── agentic-sdlc-orchestrator-dev/
+│   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml
-    ├── agentic-sdlc-orchestrator-stg/
-    │   ├── Chart.yaml
+│   ├── agentic-sdlc-orchestrator-stg/
+│   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml
-    └── agentic-sdlc-orchestrator-prod/
-        ├── Chart.yaml
-        ├── values.yaml
-        └── argocd.yaml
+│   └── agentic-sdlc-orchestrator-prod/
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── argocd.yaml
+└── scripts/
+    ├── spawn-pod.sh             # Create task pods via Helm
+    ├── tail-logs.sh             # Stream pod logs
+    └── README.md                # Scripts documentation
 ```
 
 ### Local Development

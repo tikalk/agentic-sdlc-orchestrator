@@ -130,9 +130,15 @@ Developers need to run AI coding agents on remote Kubernetes infrastructure whil
    - ArgoCD Application manifests
    - Namespace isolation
 
-3. **OpenCode Docker image** - Container with OpenCode + git
+3. **Helper Scripts** - Simplified pod management
+   - `spawn-pod.sh` - Creates pods via Helm templates
+   - `tail-logs.sh` - Streams pod logs
+   - Environment-aware (dev/stg/prod)
+   - SSH secret support
 
-4. **Integration with spec-kit** - Works with /implement command
+4. **OpenCode Docker image** - Container with OpenCode + git
+
+5. **Integration with spec-kit** - Works with /implement command
 
 ### Should Have
 
@@ -156,9 +162,9 @@ Developers need to run AI coding agents on remote Kubernetes infrastructure whil
 ### Pattern: Subagent-Based Orchestration with Helm
 
 ```
-Main Session → Subagent → kubectl/Helm → K8s Pod
+Main Session → Subagent → scripts/spawn-pod.sh → K8s Pod
                     ↓
-              kubectl logs → streams to main
+              scripts/tail-logs.sh → streams to main
                     ↓
               git commit/push → completion
 ```
@@ -236,9 +242,10 @@ Main Session → Subagent → kubectl/Helm → K8s Pod
 | T2.1 | Build OpenCode Docker image |
 | T2.2 | Create pod template |
 | T2.3 | Create multi-environment releases (dev/stg/prod) |
-| T2.4 | Test pod creation via kubectl |
+| T2.4 | Create helper scripts (spawn-pod.sh, tail-logs.sh) |
+| T2.5 | Test pod creation via scripts and kubectl |
 
-**Milestone**: Can create pod and see logs
+**Milestone**: Can create pod via scripts and see logs
 
 ### Phase 3: E2E & GitOps (Week 3)
 

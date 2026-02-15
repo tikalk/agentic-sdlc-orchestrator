@@ -41,18 +41,18 @@ Enable local OpenCode CLI sessions to spawn and control remote AI agent pods run
 │   Human: /implement                                                    │
 │     │                                                                  │
 │     ├──► Subagent 1: "Implement T001"                                │
-│     │       ├── spawn-pod.sh T001 branch-async                       │
-│     │       ├── tail-logs.sh pod-001 → streams to main session       │
+│     │       ├── scripts/spawn-pod.sh T001 branch-async repo-url      │
+│     │       ├── scripts/tail-logs.sh pod-001 → streams to main       │
 │     │       └── git commit + push when done                          │
 │     │                                                                  │
 │     ├──► Subagent 2: "Implement T002" (parallel)                   │
-│     │       ├── spawn-pod.sh T002 branch-async                       │
-│     │       ├── tail-logs.sh pod-002 → streams to main session       │
+│     │       ├── scripts/spawn-pod.sh T002 branch-async repo-url      │
+│     │       ├── scripts/tail-logs.sh pod-002 → streams to main       │
 │     │       └── git commit + push when done                          │
 │     │                                                                  │
 │     └──► Subagent N: "Implement T00N" (parallel)                   │
-│             ├── spawn-pod.sh T00N branch-async                       │
-│             ├── tail-logs.sh pod-00N → streams to main session       │
+│             ├── scripts/spawn-pod.sh T00N branch-async repo-url      │
+│             ├── scripts/tail-logs.sh pod-00N → streams to main       │
 │             └── git commit + push when done                          │
 └─────────────────────────────────────────────────────────────────────────┘
                     │
@@ -94,7 +94,14 @@ Enable local OpenCode CLI sessions to spawn and control remote AI agent pods run
 | Release (Stg) | Staging environment values | `releases/agentic-sdlc-orchestrator-stg/` |
 | Release (Prod) | Production environment values | `releases/agentic-sdlc-orchestrator-prod/` |
 
-### 3.2 K8s Manifests (Helm Templates)
+### 3.2 Helper Scripts
+
+| Script | Purpose | Location |
+|--------|---------|----------|
+| `spawn-pod.sh` | Creates K8s pod for a task using Helm templates | `scripts/spawn-pod.sh` |
+| `tail-logs.sh` | Streams pod logs to stdout | `scripts/tail-logs.sh` |
+
+### 3.3 K8s Manifests (Helm Templates)
 
 | File | Purpose |
 |------|---------|
@@ -105,7 +112,7 @@ Enable local OpenCode CLI sessions to spawn and control remote AI agent pods run
 | `templates/pod-template.yaml` | Agent pod template |
 | `templates/_helpers.tpl` | Helm helper templates |
 
-### 3.3 Docker
+### 3.4 Docker
 
 | File | Purpose |
 |------|---------|
@@ -136,37 +143,20 @@ helm upgrade --install agentic-sdlc-orchestrator-prod \
   -n agent-orchestrator-prod --create-namespace
 ```
 
-Spawn a task pod using kubectl (after Helm deployment):
+Spawn a task pod using the helper script (after Helm deployment):
 
 ```bash
-#!/bin/bash
-# Creates a K8s pod for an [ASYNC] task
+# Using the Helm-based spawn-pod.sh script
+./scripts/spawn-pod.sh task-001 specs/feature/task-001-async https://github.com/user/repo
 
-set -e
+# With SSH authentication
+SSH_SECRET_NAME=github-deploy-key ./scripts/spawn-pod.sh task-001 specs/feature/task-001-async git@github.com:user/repo.git
 
-usage() {
-    echo "Usage: $0 <task-id> <branch-name> <repo-url> <context-dir>"
-    exit 1
-}
-
-[ $# -lt 4 ] && usage
-
-TASK_ID="$1"
-BRANCH="$2"
-REPO="$3"
-CONTEXT_DIR="$4"
-
-NAMESPACE="${NAMESPACE:-agent-orchestrator}"
-
-# Create pod using Helm-rendered template
-helm template agentic-sdlc-orchestrator charts/agentic-sdlc-orchestrator \
-  --set task.id="$TASK_ID" \
-  --set task.branch="$BRANCH" \
-  --set task.repo="$REPO" \
-  --set task.contextDir="$CONTEXT_DIR" | kubectl apply -f -
-
-echo "Pod agent-${TASK_ID} created in namespace ${NAMESPACE}"
+# Production environment
+ENVIRONMENT=prod NAMESPACE=agent-orchestrator-prod ./scripts/spawn-pod.sh task-001 specs/feature/task-001-async https://github.com/user/repo
 ```
+
+The script uses `helm template` to generate the pod manifest from the release charts and applies it with `kubectl apply`.
 
 ### 4.2 Log Streaming
 
@@ -228,8 +218,8 @@ spec.md ──────► /plan ──────────► tasks.md
     │                               │
     │                               └── [ASYNC] tasks → Spawns subagent
     │                                              │
-    │                                              ├── spawn-pod.sh
-    │                                              ├── tail-logs.sh
+    │                                              ├── scripts/spawn-pod.sh
+    │                                              ├── scripts/tail-logs.sh
     │                                              └── completion detection
 ```
 
@@ -358,7 +348,9 @@ agentic-sdlc-orchestrator/
 │       ├── values.yaml
 │       └── argocd.yaml
 └── scripts/
-    # (reserved for future use)
+    ├── spawn-pod.sh             # Create task pods via Helm
+    ├── tail-logs.sh             # Stream pod logs
+    └── README.md                # Scripts documentation
 ```
 
 ---

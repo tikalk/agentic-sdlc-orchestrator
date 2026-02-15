@@ -1,0 +1,15 @@
+---
+apiVersion: v2
+name: agentic-sdlc-orchestrator
+description: Helm chart for Agentic SDLC Orchestrator - Kubernetes-based task execution system
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - agentic
+  - sdlc
+  - orchestrator
+  - opencode
+maintainers:
+  - name: Platform Team
+    email: platform@agentic-sdlc.io

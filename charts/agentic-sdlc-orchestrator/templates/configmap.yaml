@@ -1,0 +1,15 @@
+{{- if .Values.configMap.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agentic-sdlc-orchestrator.configMapName" . }}
+  namespace: {{ include "agentic-sdlc-orchestrator.namespace" . }}
+  labels:
+    {{- include "agentic-sdlc-orchestrator.labels" . | nindent 4 }}
+data:
+  # Server password is now sourced from ExternalSecret, not ConfigMap
+  # See external-secret.yaml for secret management
+  {{- with .Values.configMap.data }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}

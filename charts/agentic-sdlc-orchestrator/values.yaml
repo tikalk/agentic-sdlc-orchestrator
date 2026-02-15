@@ -1,0 +1,145 @@
+---
+# Default values for agentic-sdlc-orchestrator
+# This is a YAML-formatted file. Declare variables to be passed into your templates.
+
+# -- Global settings
+global:
+  # -- Global image pull secrets
+  imagePullSecrets: []
+  # -- Global node selector
+  nodeSelector: {}
+  # -- Global tolerations
+  tolerations: []
+  # -- Global affinity
+  affinity: {}
+
+# -- Override the name of the chart
+nameOverride: ""
+# -- Override the full name of the release
+fullnameOverride: ""
+
+# -- Namespace configuration
+namespace:
+  # -- Create the namespace
+  create: true
+  # -- Name of the namespace (defaults to release namespace if not set)
+  name: ""
+  # -- Additional labels for the namespace
+  labels: {}
+  # -- Annotations for the namespace
+  annotations: {}
+
+# -- ServiceAccount configuration
+serviceAccount:
+  # -- Create a service account
+  create: true
+  # -- ServiceAccount annotations (useful for GKE Workload Identity)
+  annotations: {}
+  # -- ServiceAccount name (defaults to fullname if not set)
+  name: ""
+
+# -- RBAC configuration
+rbac:
+  # -- Create RBAC resources
+  create: true
+  # -- Rules for the Role
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "pods/log"]
+      verbs: ["get", "list", "watch", "create", "delete"]
+    - apiGroups: [""]
+      resources: ["pods/exec"]
+      verbs: ["create"]
+    - apiGroups: [""]
+      resources: ["secrets"]
+      verbs: ["get", "list"]
+
+# -- External Secret configuration for server password
+externalSecret:
+  # -- Create ExternalSecret for server password
+  enabled: true
+  # -- Name of the ExternalSecret
+  name: ""
+  # -- SecretStore reference
+  secretStore:
+    # -- Name of the SecretStore or ClusterSecretStore
+    name: "secret-store"
+    # -- Kind of the secret store (SecretStore or ClusterSecretStore)
+    kind: "ClusterSecretStore"
+  # -- Remote reference for the secret
+  remoteRef:
+    # -- Key in the external secret store
+    key: "agentic-sdlc/server-password"
+    # -- Property within the key (optional)
+    property: ""
+  # -- Refresh interval
+  refreshInterval: "10m"
+
+# -- ConfigMap configuration
+configMap:
+  # -- Create ConfigMap for non-sensitive configuration
+  create: true
+  # -- Additional configuration data (excluding server-password which comes from ExternalSecret)
+  data: {}
+
+# -- Pod configuration for agent tasks
+pod:
+  # -- Image configuration
+  image:
+    # -- Image repository
+    repository: agentic-sdlc/opencode
+    # -- Image pull policy
+    pullPolicy: IfNotPresent
+    # -- Image tag (defaults to appVersion if not set)
+    tag: ""
+  
+  # -- Resource limits and requests
+  resources:
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+  
+  # -- Node selector for agent pods
+  nodeSelector: {}
+  
+  # -- Tolerations for agent pods
+  tolerations: []
+  
+  # -- Affinity for agent pods
+  affinity: {}
+  
+  # -- Pod security context
+  securityContext: {}
+  
+  # -- Container security context
+  containerSecurityContext: {}
+  
+  # -- SSH secret configuration
+  sshSecret:
+    # -- Enable SSH secret mounting
+    enabled: false
+    # -- Name of the SSH secret
+    name: ""
+    # -- Mount path for SSH keys
+    mountPath: "/root/.ssh"
+  
+  # -- Environment variables
+  env: []
+  
+  # -- Extra volumes
+  extraVolumes: []
+  
+  # -- Extra volume mounts
+  extraVolumeMounts: []
+
+# -- Agent task configuration
+task:
+  # -- Default repository URL
+  defaultRepo: ""
+  # -- Default branch name
+  defaultBranch: "main"
+  # -- Default context directory
+  defaultContextDir: "/workspace"

@@ -1,0 +1,51 @@
+---
+# Production environment values for agentic-sdlc-orchestrator
+
+agentic-sdlc-orchestrator:
+  nameOverride: "agentic-sdlc-orchestrator-prod"
+  fullnameOverride: "agentic-sdlc-orchestrator-prod"
+  
+  namespace:
+    create: true
+    name: agent-orchestrator-prod
+  
+  serviceAccount:
+    create: true
+    annotations:
+      # Example GKE Workload Identity annotation
+      # iam.gke.io/gcp-service-account: agent-orchestrator@project-id.iam.gserviceaccount.com
+  
+  externalSecret:
+    enabled: true
+    secretStore:
+      name: secret-store-prod
+      kind: ClusterSecretStore
+    remoteRef:
+      key: agentic-sdlc/prod/server-password
+    refreshInterval: 10m
+  
+  pod:
+    image:
+      repository: agentic-sdlc/opencode
+      pullPolicy: IfNotPresent
+      tag: "0.1.0"
+    
+    resources:
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+    
+    sshSecret:
+      enabled: false
+    
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+  
+  task:
+    defaultRepo: ""
+    defaultBranch: "main"
+    defaultContextDir: "/workspace"

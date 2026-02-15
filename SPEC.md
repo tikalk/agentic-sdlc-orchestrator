@@ -85,22 +85,25 @@ Enable local OpenCode CLI sessions to spawn and control remote AI agent pods run
 
 ## 3. Components
 
-### 3.1 Scripts
+### 3.1 Deployment
 
-| Script | Purpose | Location |
-|--------|---------|----------|
-| `spawn-pod.sh` | Creates K8s pod for a task | `scripts/k8s/` |
-| `tail-logs.sh` | Streams pod logs to stdout | `scripts/k8s/` |
-| `k8s-init.sh` | Initialize K8s resources | `scripts/k8s/` |
+| Component | Purpose | Location |
+|-----------|---------|----------|
+| Helm Chart | K8s resources templating | `charts/agentic-sdlc-orchestrator/` |
+| Release (Dev) | Dev environment values | `releases/agentic-sdlc-orchestrator-dev/` |
+| Release (Stg) | Staging environment values | `releases/agentic-sdlc-orchestrator-stg/` |
+| Release (Prod) | Production environment values | `releases/agentic-sdlc-orchestrator-prod/` |
 
-### 3.2 K8s Manifests
+### 3.2 K8s Manifests (Helm Templates)
 
 | File | Purpose |
 |------|---------|
-| `k8s/namespace.yaml` | Create namespace for agents |
-| `k8s/rbac.yaml` | ServiceAccount and roles |
-| `k8s/configmap.yaml` | Shared configuration |
-| `k8s/pod-template.yaml` | Agent pod template |
+| `templates/namespace.yaml` | Create namespace for agents |
+| `templates/rbac.yaml` | ServiceAccount and roles |
+| `templates/configmap.yaml` | Shared configuration (non-sensitive) |
+| `templates/external-secret.yaml` | External Secrets Operator integration |
+| `templates/pod-template.yaml` | Agent pod template |
+| `templates/_helpers.tpl` | Helm helper templates |
 
 ### 3.3 Docker
 
@@ -112,7 +115,28 @@ Enable local OpenCode CLI sessions to spawn and control remote AI agent pods run
 
 ## 4. Technical Design
 
-### 4.1 spawn-pod.sh
+### 4.1 Helm Deployment
+
+Deploy the orchestrator using Helm:
+
+```bash
+# Development
+helm upgrade --install agentic-sdlc-orchestrator-dev \
+  releases/agentic-sdlc-orchestrator-dev \
+  -n agent-orchestrator-dev --create-namespace
+
+# Staging
+helm upgrade --install agentic-sdlc-orchestrator-stg \
+  releases/agentic-sdlc-orchestrator-stg \
+  -n agent-orchestrator-stg --create-namespace
+
+# Production
+helm upgrade --install agentic-sdlc-orchestrator-prod \
+  releases/agentic-sdlc-orchestrator-prod \
+  -n agent-orchestrator-prod --create-namespace
+```
+
+Spawn a task pod using kubectl (after Helm deployment):
 
 ```bash
 #!/bin/bash
@@ -134,60 +158,25 @@ CONTEXT_DIR="$4"
 
 NAMESPACE="${NAMESPACE:-agent-orchestrator}"
 
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: agent-${TASK_ID}
-  labels:
-    app: agent-orchestrator
-    task-id: ${TASK_ID}
-spec:
-  restartPolicy: Never
-  containers:
-    - name: agent
-      image: agentic-sdlc/opencode:latest
-      env:
-        - name: OPENCODE_SERVER_PASSWORD
-          valueFrom:
-            configMapKeyRef:
-              name: agent-orchestrator-config
-              key: server-password
-        - name: GIT_REPO
-          value: "${REPO}"
-        - name: GIT_BRANCH
-          value: "${BRANCH}"
-        - name: TASK_CONTEXT_PATH
-          value: "${CONTEXT_DIR}"
-      command: ["/bin/bash", "-c"]
-      args:
-        - |
-          set -e
-          cd /workspace
-          git clone -b ${BRANCH} ${REPO} .
-          ls -la
-          opencode run "Implement the task described in $(ls *.md | head -1)"
-          git add .
-          git commit -m "feat: completed ${TASK_ID}" || true
-          git push
-      resources:
-        limits:
-          cpu: "2"
-          memory: "4Gi"
-  serviceAccountName: agent-orchestrator
-EOF
+# Create pod using Helm-rendered template
+helm template agentic-sdlc-orchestrator charts/agentic-sdlc-orchestrator \
+  --set task.id="$TASK_ID" \
+  --set task.branch="$BRANCH" \
+  --set task.repo="$REPO" \
+  --set task.contextDir="$CONTEXT_DIR" | kubectl apply -f -
 
 echo "Pod agent-${TASK_ID} created in namespace ${NAMESPACE}"
 ```
 
-### 4.2 tail-logs.sh
+### 4.2 Log Streaming
+
+Stream logs from a K8s pod using kubectl:
 
 ```bash
 #!/bin/bash
 # Tails logs from a K8s pod to stdout
 
 NAMESPACE="${NAMESPACE:-agent-orchestrator}"
-
 POD_NAME="$1"
 
 if [ -z "$POD_NAME" ]; then
@@ -198,42 +187,30 @@ fi
 kubectl logs -f -n "$NAMESPACE" "$POD_NAME"
 ```
 
-### 4.3 Pod Template
+### 4.3 Pod Template (Helm)
+
+See `templates/pod-template.yaml` for the full pod spec template. Key features:
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: agent-{task-id}
-  labels:
-    app: agent-orchestrator
-    task-id: {task-id}
-spec:
-  restartPolicy: Never
-  containers:
-    - name: agent
-      image: agentic-sdlc/opencode:latest
-      env:
-        - name: OPENCODE_SERVER_PASSWORD
-          valueFrom:
-            configMapKeyRef:
-              name: agent-orchestrator-config
-              key: server-password
-        - name: GIT_REPO
-          value: "{repo-url}"
-        - name: GIT_BRANCH
-          value: "{branch-name}"
-      command: ["/bin/bash", "-c"]
-      args:
-        - |
-          set -e
-          cd /workspace
-          git clone -b {branch-name} {repo-url} .
-          opencode run "Implement the task"
-          git add .
-          git commit -m "feat: completed {task-id}" || true
-          git push
-  serviceAccountName: agent-orchestrator
+{{- define "agentic-sdlc-orchestrator.podTemplate" -}}
+restartPolicy: Never
+serviceAccountName: {{ include "agentic-sdlc-orchestrator.serviceAccountName" . }}
+containers:
+  - name: agent
+    image: "{{ .Values.pod.image.repository }}:{{ include "agentic-sdlc-orchestrator.imageTag" . }}"
+    env:
+      - name: OPENCODE_SERVER_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "agentic-sdlc-orchestrator.externalSecretName" . }}
+            key: server-password
+      - name: GIT_REPO
+        value: "{{ .Values.task.defaultRepo }}"
+      - name: GIT_BRANCH
+        value: "{{ .Values.task.defaultBranch }}"
+    resources:
+      {{- toYaml .Values.pod.resources | nindent 6 }}
+{{- end }}
 ```
 
 ---
@@ -261,7 +238,7 @@ spec.md ──────► /plan ──────────► tasks.md
 The integration happens at `/implement` command:
 - Parse tasks.md for [ASYNC] markers
 - For each [ASYNC] task, spawn an OpenCode subagent
-- Subagent runs spawn-pod.sh + tail-logs.sh
+- Subagent creates K8s pod via Helm or kubectl
 
 ### 5.3 Context Delivery
 
@@ -272,64 +249,51 @@ Each pod receives:
 
 ---
 
-## 6. K8s Resources
+## 6. K8s Resources (Helm Templates)
 
 ### 6.1 Namespace
 
+See `templates/namespace.yaml`:
 ```yaml
+{{- if .Values.namespace.create }}
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: agent-orchestrator
+  name: {{ include "agentic-sdlc-orchestrator.namespace" . }}
+  labels:
+    {{- include "agentic-sdlc-orchestrator.labels" . | nindent 4 }}
+{{- end }}
 ```
 
 ### 6.2 RBAC
 
+See `templates/rbac.yaml` and `templates/serviceaccount.yaml`:
+- ServiceAccount with optional Workload Identity annotations
+- Role with pod management permissions
+- RoleBinding
+
+### 6.3 External Secrets
+
+See `templates/external-secret.yaml`:
 ```yaml
-apiVersion: v1
-kind: ServiceAccount
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
 metadata:
-  name: agent-orchestrator
-  namespace: agent-orchestrator
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: agent-orchestrator
-  namespace: agent-orchestrator
-rules:
-  - apiGroups: [""]
-    resources: ["pods", "pods/log"]
-    verbs: ["get", "list", "watch", "create", "delete"]
-  - apiGroups: [""]
-    resources: ["pods/exec"]
-    verbs: ["create"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: agent-orchestrator
-  namespace: agent-orchestrator
-subjects:
-  - kind: ServiceAccount
-    name: agent-orchestrator
-roleRef:
-  kind: Role
-  name: agent-orchestrator
-  apiGroup: rbac.authorization.k8s.io
+  name: {{ include "agentic-sdlc-orchestrator.externalSecretName" . }}
+spec:
+  refreshInterval: {{ .Values.externalSecret.refreshInterval }}
+  secretStoreRef:
+    name: {{ .Values.externalSecret.secretStore.name }}
+    kind: {{ .Values.externalSecret.secretStore.kind }}
+  target:
+    name: {{ include "agentic-sdlc-orchestrator.externalSecretName" . }}
+  data:
+    - secretKey: server-password
+      remoteRef:
+        key: {{ .Values.externalSecret.remoteRef.key }}
 ```
 
-### 6.3 ConfigMap
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: agent-orchestrator-config
-  namespace: agent-orchestrator
-data:
-  server-password: "changeme"
-```
+**Security Note**: Secrets are managed via External Secrets Operator, not hardcoded in ConfigMap.
 
 ---
 
@@ -367,16 +331,34 @@ agentic-sdlc-orchestrator/
 ├── PRD.md                       # Product requirements
 ├── docker/
 │   └── Dockerfile.opencode       # OpenCode container image
-├── k8s/
-│   ├── namespace.yaml           # Namespace
-│   ├── rbac.yaml               # ServiceAccount, Role, RoleBinding
-│   ├── configmap.yaml          # Shared config
-│   └── pod-template.yaml        # Agent pod template
+├── charts/
+│   └── agentic-sdlc-orchestrator/  # Helm chart
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       ├── README.md
+│       └── templates/
+│           ├── _helpers.tpl     # Template helpers
+│           ├── namespace.yaml
+│           ├── serviceaccount.yaml
+│           ├── rbac.yaml
+│           ├── configmap.yaml   # Non-sensitive config only
+│           ├── external-secret.yaml
+│           └── pod-template.yaml
+├── releases/
+│   ├── agentic-sdlc-orchestrator-dev/
+│   │   ├── Chart.yaml
+│   │   ├── values.yaml
+│   │   └── argocd.yaml          # GitOps config
+│   ├── agentic-sdlc-orchestrator-stg/
+│   │   ├── Chart.yaml
+│   │   ├── values.yaml
+│   │   └── argocd.yaml
+│   └── agentic-sdlc-orchestrator-prod/
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── argocd.yaml
 └── scripts/
-    └── k8s/
-        ├── k8s-init.sh         # Initialize K8s resources
-        ├── spawn-pod.sh        # Create pod for task
-        └── tail-logs.sh        # Stream pod logs
+    # (reserved for future use)
 ```
 
 ---
@@ -403,10 +385,12 @@ agentic-sdlc-orchestrator/
 
 ## 11. Acceptance Criteria
 
-- [ ] spawn-pod.sh creates a pod successfully
+- [ ] Helm chart deploys successfully to dev/stg/prod environments
+- [ ] External Secrets Operator integrates with secret store
 - [ ] Pod clones git branch and runs opencode
-- [ ] tail-logs.sh streams logs to stdout
+- [ ] `kubectl logs` streams logs to stdout
 - [ ] Agent can commit and push changes
 - [ ] Integration with spec-kit /implement works
 - [ ] Multiple [ASYNC] tasks run in parallel
 - [ ] Human can see all agent activity from main session
+- [ ] ArgoCD GitOps deployment works correctly

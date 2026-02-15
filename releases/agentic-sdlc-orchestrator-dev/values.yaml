@@ -1,0 +1,49 @@
+---
+# Development environment values for agentic-sdlc-orchestrator
+
+agentic-sdlc-orchestrator:
+  nameOverride: "agentic-sdlc-orchestrator-dev"
+  fullnameOverride: "agentic-sdlc-orchestrator-dev"
+  
+  namespace:
+    create: true
+    name: agent-orchestrator-dev
+  
+  serviceAccount:
+    create: true
+    annotations: {}
+  
+  externalSecret:
+    enabled: true
+    secretStore:
+      name: secret-store-dev
+      kind: ClusterSecretStore
+    remoteRef:
+      key: agentic-sdlc/dev/server-password
+    refreshInterval: 10m
+  
+  pod:
+    image:
+      repository: agentic-sdlc/opencode
+      pullPolicy: IfNotPresent
+      tag: "0.1.0-dev"
+    
+    resources:
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+    
+    sshSecret:
+      enabled: false
+    
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+  
+  task:
+    defaultRepo: ""
+    defaultBranch: "main"
+    defaultContextDir: "/workspace"

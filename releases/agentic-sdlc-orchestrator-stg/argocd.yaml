@@ -1,0 +1,14 @@
+---
+appName: agentic-sdlc-orchestrator-stg
+namespace: agent-orchestrator-stg
+serverName: agentic-sdlc-stg-gcp-server
+source:
+  repoURL: https://github.com/agentic-sdlc/agentic-sdlc-orchestrator.git
+  targetRevision: main
+  path: releases/agentic-sdlc-orchestrator-stg
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+  syncOptions:
+    - CreateNamespace=true

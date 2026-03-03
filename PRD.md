@@ -1,6 +1,6 @@
-# PRD.md - K8s Agent Orchestration via OpenCode Subagents
+# PRD.md - K8s Agent Execution via OpenCode Subagents
 
-**Project Name**: Agentic SDLC Orchestrator  
+**Project Name**: Agentic SDLC Runner  
 **Version**: 1.1.0  
 **Date**: 2026-02-15
 
@@ -73,7 +73,21 @@ Developers need to run AI coding agents on remote Kubernetes infrastructure whil
 - Changes pushed to remote branch
 - Human can review before merging
 
-### Story 5: Secure Secret Management
+### Story 5: Worktree Isolation for Same-Branch Parallel Execution
+
+**As a** developer  
+**I want** multiple [ASYNC] tasks from the same feature branch to run in parallel without conflicts  
+**So that** I can speed up feature implementation
+
+**Acceptance Criteria**:
+- Same-branch parallel tasks each get their own Git worktree
+- Worktrees created in `.agentic-sdlc/worktrees/` directory
+- Each worktree has isolated working directory
+- Branch names include task identifier to prevent conflicts
+- Worktree automatically cleaned up after task completion
+- Branch preserved for review/merge
+
+### Story 6: Secure Secret Management
 
 **As a** security engineer  
 **I want** secrets managed via External Secrets Operator  
@@ -101,6 +115,7 @@ Developers need to run AI coding agents on remote Kubernetes infrastructure whil
 | F7 | Helm-based deployment | Must |
 | F8 | External Secrets Operator integration | Must |
 | F9 | Multi-environment support (dev/stg/prod) | Must |
+| F10 | Worktree isolation for same-branch parallel tasks | Must |
 
 ### Non-Functional Requirements
 
@@ -140,6 +155,11 @@ Developers need to run AI coding agents on remote Kubernetes infrastructure whil
 
 5. **Integration with spec-kit** - Works with /implement command
 
+6. **Worktree Support** - Git worktree for same-branch parallel tasks
+   - Worktree creation per parallel task
+   - Branch naming with task identifier
+   - Worktree cleanup after completion
+
 ### Should Have
 
 1. Auto-cleanup of completed pods
@@ -149,7 +169,7 @@ Developers need to run AI coding agents on remote Kubernetes infrastructure whil
 
 ### Out of Scope
 
-1. External orchestrator/controller
+1. External controller
 2. K-Agent framework integration
 3. Beads issue tracking
 4. Web dashboard
@@ -193,10 +213,14 @@ Main Session → Subagent → scripts/spawn-pod.sh → K8s Pod
 │                                                                  │
 │   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
 │   │ Pod: Task 1  │  │ Pod: Task 2  │  │ Pod: Task N  │          │
-│   │ git clone    │  │ git clone    │  │ git clone    │          │
+│   │ worktree-1   │  │ worktree-2   │  │ worktree-N   │          │
 │   │ opencode run │  │ opencode run │  │ opencode run │          │
 │   │ git push     │  │ git push     │  │ git push     │          │
 │   └──────────────┘  └──────────────┘  └──────────────┘          │
+│                                                                  │
+│   Worktrees: .agentic-sdlc/worktrees/                           │
+│   - feature-login-task1 (isolated working directory)            │
+│   - feature-login-task2 (isolated working directory)            │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -361,6 +385,7 @@ Main Session → Subagent → scripts/spawn-pod.sh → K8s Pod
 | [ASYNC] task | Task that can be delegated to autonomous agent |
 | [SYNC] task | Task requiring human interaction |
 | Subagent | OpenCode's built-in agent spawning capability |
+| Worktree | Git feature for multiple working directories; used for parallel task isolation |
 | ESO | External Secrets Operator |
 | Workload Identity | Cloud-native identity for K8s workloads |
 | GitOps | Declarative continuous deployment using git |
@@ -369,17 +394,17 @@ Main Session → Subagent → scripts/spawn-pod.sh → K8s Pod
 
 ```bash
 # Development
-helm upgrade --install agentic-sdlc-orchestrator-dev \
-  releases/agentic-sdlc-orchestrator-dev \
-  -n agent-orchestrator-dev --create-namespace
+helm upgrade --install agentic-sdlc-runner-dev \
+  releases/agentic-sdlc-runner-dev \
+  -n agent-runner-dev --create-namespace
 
 # Staging
-helm upgrade --install agentic-sdlc-orchestrator-stg \
-  releases/agentic-sdlc-orchestrator-stg \
-  -n agent-orchestrator-stg --create-namespace
+helm upgrade --install agentic-sdlc-runner-stg \
+  releases/agentic-sdlc-runner-stg \
+  -n agent-runner-stg --create-namespace
 
 # Production
-helm upgrade --install agentic-sdlc-orchestrator-prod \
-  releases/agentic-sdlc-orchestrator-prod \
-  -n agent-orchestrator-prod --create-namespace
+helm upgrade --install agentic-sdlc-runner-prod \
+  releases/agentic-sdlc-runner-prod \
+  -n agent-runner-prod --create-namespace
 ```

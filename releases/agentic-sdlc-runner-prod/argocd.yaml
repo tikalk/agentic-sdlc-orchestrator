@@ -1,0 +1,14 @@
+---
+appName: agentic-sdlc-runner-prod
+namespace: agent-runner-prod
+serverName: agentic-sdlc-prod-gcp-server
+source:
+  repoURL: https://github.com/agentic-sdlc/agentic-sdlc-runner.git
+  targetRevision: main
+  path: releases/agentic-sdlc-runner-prod
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+  syncOptions:
+    - CreateNamespace=true

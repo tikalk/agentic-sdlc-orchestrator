@@ -1,0 +1,12 @@
+{{- if .Values.task.id }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "agentic-sdlc-runner.fullname" . }}-{{ .Values.task.id }}
+  namespace: {{ include "agentic-sdlc-runner.namespace" . }}
+  labels:
+    {{- include "agentic-sdlc-runner.labels" . | nindent 4 }}
+    task-id: {{ .Values.task.id }}
+spec:
+  {{- include "agentic-sdlc-runner.podTemplate" . | nindent 2 }}
+{{- end }}

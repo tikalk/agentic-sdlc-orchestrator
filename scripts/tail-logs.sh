@@ -3,7 +3,7 @@
 
 set -e
 
-NAMESPACE="${NAMESPACE:-agent-orchestrator}"
+NAMESPACE="${NAMESPACE:-agent-runner}"
 
 usage() {
     echo "Usage: $0 <pod-name>"
@@ -12,11 +12,11 @@ usage() {
     echo "  pod-name     Name of the pod to tail logs from"
     echo ""
     echo "Environment Variables:"
-    echo "  NAMESPACE    Kubernetes namespace (default: agent-orchestrator)"
+    echo "  NAMESPACE    Kubernetes namespace (default: agent-runner)"
     echo ""
     echo "Examples:"
     echo "  $0 agent-task-001"
-    echo "  NAMESPACE=agent-orchestrator-prod $0 agent-task-001"
+    echo "  NAMESPACE=agent-runner-prod $0 agent-task-001"
     exit 1
 }
 

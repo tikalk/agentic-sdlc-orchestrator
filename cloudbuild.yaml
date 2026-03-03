@@ -1,0 +1,5 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/dwh-dev-414206/agentic-sdlc-opencode:0.1.0-dev', '-f', 'docker/Dockerfile.opencode', '.']
+images:
+  - 'gcr.io/dwh-dev-414206/agentic-sdlc-opencode:0.1.0-dev'

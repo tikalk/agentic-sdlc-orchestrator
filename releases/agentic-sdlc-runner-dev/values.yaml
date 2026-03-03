@@ -1,13 +1,13 @@
 ---
-# Staging environment values for agentic-sdlc-orchestrator
+# Development environment values for agentic-sdlc-runner
 
-agentic-sdlc-orchestrator:
-  nameOverride: "agentic-sdlc-orchestrator-stg"
-  fullnameOverride: "agentic-sdlc-orchestrator-stg"
+agentic-sdlc-runner:
+  nameOverride: "agentic-sdlc-runner-dev"
+  fullnameOverride: "agentic-sdlc-runner-dev"
   
   namespace:
     create: true
-    name: agent-orchestrator-stg
+    name: agent-runner-dev
   
   serviceAccount:
     create: true
@@ -16,25 +16,25 @@ agentic-sdlc-orchestrator:
   externalSecret:
     enabled: true
     secretStore:
-      name: secret-store-stg
+      name: gcp-dwh-dev-secret-store
       kind: ClusterSecretStore
     remoteRef:
-      key: agentic-sdlc/stg/server-password
+      key: agentic-sdlc-dev-server-password
     refreshInterval: 10m
   
   pod:
     image:
-      repository: agentic-sdlc/opencode
+      repository: gcr.io/dwh-dev-414206/agentic-sdlc-opencode
       pullPolicy: IfNotPresent
-      tag: "0.1.0-stg"
+      tag: "0.1.0-dev"
     
     resources:
       limits:
-        cpu: "2"
-        memory: "4Gi"
-      requests:
         cpu: "1"
         memory: "2Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
     
     sshSecret:
       enabled: false

@@ -2,8 +2,8 @@
 This is a pod template that can be used as a Job or CronJob template.
 It's not deployed directly but referenced by the spawn-pod script.
 */}}
-{{- define "agentic-sdlc-orchestrator.podTemplate" -}}
-restartPolicy: Never
+{{- define "agentic-sdlc-runner.podTemplate" -}}
+restartPolicy: Always
 {{- if .Values.pod.imagePullSecrets }}
 imagePullSecrets:
   {{- toYaml .Values.pod.imagePullSecrets | nindent 2 }}
@@ -11,7 +11,7 @@ imagePullSecrets:
 imagePullSecrets:
   {{- toYaml .Values.global.imagePullSecrets | nindent 2 }}
 {{- end }}
-serviceAccountName: {{ include "agentic-sdlc-orchestrator.serviceAccountName" . }}
+serviceAccountName: {{ include "agentic-sdlc-runner.serviceAccountName" . }}
 securityContext:
   {{- toYaml .Values.pod.securityContext | nindent 2 }}
 {{- if or .Values.pod.sshSecret.enabled .Values.pod.extraVolumes }}
@@ -28,7 +28,7 @@ volumes:
 {{- end }}
 containers:
   - name: agent
-    image: "{{ .Values.pod.image.repository }}:{{ include "agentic-sdlc-orchestrator.imageTag" . }}"
+    image: "{{ .Values.pod.image.repository }}:{{ include "agentic-sdlc-runner.imageTag" . }}"
     imagePullPolicy: {{ .Values.pod.image.pullPolicy }}
     securityContext:
       {{- toYaml .Values.pod.containerSecurityContext | nindent 6 }}
@@ -43,21 +43,45 @@ containers:
       {{- toYaml . | nindent 6 }}
       {{- end }}
     {{- end }}
+    ports:
+      - name: opencode
+        containerPort: 4096
+        protocol: TCP
+    envFrom:
+      - secretRef:
+          name: {{ include "agentic-sdlc-runner.externalSecretName" . }}
     env:
-      - name: OPENCODE_SERVER_PASSWORD
-        valueFrom:
-          secretKeyRef:
-            name: {{ include "agentic-sdlc-orchestrator.externalSecretName" . }}
-            key: server-password
+      - name: OPENCODE_SERVER_USERNAME
+        value: "opencode"
+      - name: TASK_ID
+        value: "{{ .Values.task.id }}"
       - name: GIT_REPO
-        value: "{{ .Values.task.defaultRepo }}"
+        value: "{{ .Values.task.repo }}"
       - name: GIT_BRANCH
-        value: "{{ .Values.task.defaultBranch }}"
+        value: "{{ .Values.task.branch }}"
       - name: TASK_CONTEXT_PATH
-        value: "{{ .Values.task.defaultContextDir }}"
+        value: "{{ .Values.task.contextDir | default .Values.task.defaultContextDir }}"
       {{- with .Values.pod.env }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+    readinessProbe:
+      httpGet:
+        path: /global/health
+        port: 4096
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+    livenessProbe:
+      httpGet:
+        path: /global/health
+        port: 4096
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
     resources:
       {{- toYaml .Values.pod.resources | nindent 6 }}
 {{- with .Values.pod.nodeSelector }}

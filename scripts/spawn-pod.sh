@@ -1,15 +1,15 @@
 #!/bin/bash
 # spawn-pod.sh - Creates a K8s pod for an [ASYNC] task using Helm templates
 # Usage: spawn-pod.sh [OPTIONS] <task-id> <branch-name> <repo-url> [context-dir]
-#   OR: agentic-sdlc-orchestrator spawn --task-id <id> --branch <branch> --repo <repo> --context-dir <dir>
+#   OR: agentic-sdlc-runner spawn --task-id <id> --branch <branch> --repo <repo> --context-dir <dir>
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-NAMESPACE="${NAMESPACE:-agent-orchestrator}"
-RELEASE_NAME="${RELEASE_NAME:-agentic-sdlc-orchestrator}"
+NAMESPACE="${NAMESPACE:-agent-runner}"
+RELEASE_NAME="${RELEASE_NAME:-agentic-sdlc-runner}"
 SSH_SECRET_NAME="${SSH_SECRET_NAME:-}"
 ENVIRONMENT="${ENVIRONMENT:-dev}"
 
@@ -50,7 +50,7 @@ parse_cli_args() {
                 exit 0
                 ;;
             spawn)
-                # Handle 'agentic-sdlc-orchestrator spawn' syntax
+                # Handle 'agentic-sdlc-runner spawn' syntax
                 shift
                 ;;
             *)
@@ -81,7 +81,7 @@ parse_cli_args() {
 
 usage() {
     echo "Usage: $0 [OPTIONS] <task-id> <branch-name> <repo-url> [context-dir]"
-    echo "   OR: agentic-sdlc-orchestrator spawn --task-id <id> --branch <branch> --repo <repo> [--context-dir <dir>]"
+    echo "   OR: agentic-sdlc-runner spawn --task-id <id> --branch <branch> --repo <repo> [--context-dir <dir>]"
     echo ""
     echo "Arguments (positional):"
     echo "  task-id      Unique identifier for the task (e.g., task-001)"
@@ -100,8 +100,8 @@ usage() {
     echo "  --help, -h            Show this help message"
     echo ""
     echo "Environment Variables:"
-    echo "  NAMESPACE        Kubernetes namespace (default: agent-orchestrator)"
-    echo "  RELEASE_NAME     Helm release name (default: agentic-sdlc-orchestrator)"
+    echo "  NAMESPACE        Kubernetes namespace (default: agent-runner)"
+    echo "  RELEASE_NAME     Helm release name (default: agentic-sdlc-runner)"
     echo "  SSH_SECRET_NAME  Name of K8s secret containing SSH key (optional)"
     echo "  ENVIRONMENT      Environment to use: dev, stg, prod (default: dev)"
     echo ""
@@ -110,13 +110,13 @@ usage() {
     echo "  $0 task-001 specs/feature/task-001-async https://github.com/user/repo"
     echo ""
     echo "  # CLI-style arguments (spec-kit integration)"
-    echo "  agentic-sdlc-orchestrator spawn --task-id task-001 --branch specs/feature/task-001-async --repo https://github.com/user/repo"
+    echo "  agentic-sdlc-runner spawn --task-id task-001 --branch specs/feature/task-001-async --repo https://github.com/user/repo"
     echo ""
     echo "  # With SSH authentication"
     echo "  SSH_SECRET_NAME=github-deploy-key $0 task-001 specs/feature/task-001-async git@github.com:user/repo.git"
     echo ""
     echo "  # Production environment"
-    echo "  ENVIRONMENT=prod NAMESPACE=agent-orchestrator-prod $0 task-001 specs/feature/task-001-async https://github.com/user/repo"
+    echo "  ENVIRONMENT=prod NAMESPACE=agent-runner-prod $0 task-001 specs/feature/task-001-async https://github.com/user/repo"
 }
 
 # Parse arguments (supports both CLI-style and positional)
@@ -180,20 +180,30 @@ fi
 # Build Helm values
 echo "Building pod manifest with Helm..."
 
+# Determine chart prefix (for subchart deployments)
+CHART_PREFIX=""
+if [ -f "$RELEASE_DIR/Chart.yaml" ]; then
+    # Check if this is a wrapper chart with agentic-sdlc-runner as dependency
+    if grep -q "agentic-sdlc-runner" "$RELEASE_DIR/Chart.yaml" 2>/dev/null; then
+        CHART_PREFIX="agentic-sdlc-runner."
+    fi
+fi
+
 HELM_VALUES=""
-HELM_VALUES="${HELM_VALUES} --set task.id=$TASK_ID"
-HELM_VALUES="${HELM_VALUES} --set task.branch=$BRANCH"
-HELM_VALUES="${HELM_VALUES} --set task.repo=$REPO"
-HELM_VALUES="${HELM_VALUES} --set task.contextDir=$CONTEXT_DIR"
+HELM_VALUES="${HELM_VALUES} --set ${CHART_PREFIX}task.id=$TASK_ID"
+HELM_VALUES="${HELM_VALUES} --set ${CHART_PREFIX}task.branch=$BRANCH"
+HELM_VALUES="${HELM_VALUES} --set ${CHART_PREFIX}task.repo=$REPO"
+HELM_VALUES="${HELM_VALUES} --set ${CHART_PREFIX}task.contextDir=$CONTEXT_DIR"
 
 # Add SSH secret if provided
 if [ -n "$SSH_SECRET_NAME" ]; then
-    HELM_VALUES="${HELM_VALUES} --set pod.sshSecret.enabled=true"
-    HELM_VALUES="${HELM_VALUES} --set pod.sshSecret.name=$SSH_SECRET_NAME"
+    HELM_VALUES="${HELM_VALUES} --set ${CHART_PREFIX}pod.sshSecret.enabled=true"
+    HELM_VALUES="${HELM_VALUES} --set ${CHART_PREFIX}pod.sshSecret.name=$SSH_SECRET_NAME"
 fi
 
 # Generate pod name
 POD_NAME="agent-${TASK_ID}"
+FULL_POD_NAME="${RELEASE_NAME}-${ENVIRONMENT}-${TASK_ID}"
 
 # Generate and apply the manifest
 echo "Generating manifest from Helm chart..."
@@ -211,23 +221,81 @@ if [ $? -eq 0 ]; then
     echo "================================"
     echo "Pod created successfully!"
     echo "================================"
-    echo "Pod Name:     $POD_NAME"
+    echo "Pod Name:     $FULL_POD_NAME"
     echo "Namespace:    $NAMESPACE"
+    echo ""
+    
+    # Wait for pod to be ready
+    echo "⏳ Waiting for pod to be ready..."
+    kubectl wait --for=condition=ready pod "${FULL_POD_NAME}" -n "$NAMESPACE" --timeout=120s
+    
+    if [ $? -eq 0 ]; then
+        echo "✅ Pod is ready!"
+        echo ""
+        
+        # Start port-forward in background
+        LOCAL_PORT=4096
+        echo "🔄 Starting port-forward (localhost:$LOCAL_PORT -> pod:4096)..."
+        kubectl port-forward "${FULL_POD_NAME}" "${LOCAL_PORT}":4096 -n "$NAMESPACE" &
+        PORT_FORWARD_PID=$!
+        
+        # Wait a moment for port-forward to establish
+        sleep 3
+        
+        # Check if port-forward is still running
+        if kill -0 $PORT_FORWARD_PID 2>/dev/null; then
+            echo ""
+            echo "================================"
+            echo "  OpenCode Server Ready!"
+            echo "================================"
+            echo ""
+            echo "🔗 Connection Details:"
+            echo "   Local URL:    http://localhost:$LOCAL_PORT"
+            echo "   Health Check: http://localhost:$LOCAL_PORT/global/health"
+            echo "   API Docs:     http://localhost:$LOCAL_PORT/doc"
+            echo ""
+            echo "🔐 Authentication:"
+            echo "   Username: opencode"
+            echo "   Password: <from K8s secret>"
+            echo ""
+            echo "💻 Connect with OpenCode CLI:"
+            echo "   opencode --hostname localhost --port $LOCAL_PORT"
+            echo ""
+            echo "📡 Or use SDK/curl:"
+            echo "   curl http://localhost:$LOCAL_PORT/global/health"
+            echo ""
+            echo "⚠️  Port-forward PID: $PORT_FORWARD_PID"
+            echo "   Stop port-forward with: kill $PORT_FORWARD_PID"
+            echo ""
+            
+            # Keep script running to maintain port-forward
+            echo "📝 Press Ctrl+C to stop port-forward and exit"
+            wait $PORT_FORWARD_PID
+        else
+            echo "❌ Port-forward failed to start"
+            echo ""
+            echo "Manual port-forward command:"
+            echo "  kubectl port-forward ${FULL_POD_NAME} 4096:4096 -n $NAMESPACE"
+        fi
+    else
+        echo "❌ Pod failed to become ready within timeout"
+        echo ""
+        echo "Check pod status:"
+        echo "  kubectl describe pod ${FULL_POD_NAME} -n $NAMESPACE"
+    fi
+    
     echo ""
     echo "Useful commands:"
     echo "  # Stream logs:"
-    echo "  kubectl logs -f $POD_NAME -n $NAMESPACE"
+    echo "  kubectl logs -f ${FULL_POD_NAME} -n $NAMESPACE"
     echo "  # OR use tail-logs.sh:"
-    echo "  ./scripts/tail-logs.sh $POD_NAME"
+    echo "  ./scripts/tail-logs.sh ${FULL_POD_NAME}"
     echo ""
     echo "  # Check status:"
-    echo "  kubectl get pod $POD_NAME -n $NAMESPACE"
-    echo ""
-    echo "  # Describe pod:"
-    echo "  kubectl describe pod $POD_NAME -n $NAMESPACE"
+    echo "  kubectl get pod ${FULL_POD_NAME} -n $NAMESPACE"
     echo ""
     echo "  # Delete pod:"
-    echo "  kubectl delete pod $POD_NAME -n $NAMESPACE"
+    echo "  kubectl delete pod ${FULL_POD_NAME} -n $NAMESPACE"
 else
     echo ""
     echo "Error: Failed to create pod"

@@ -1,6 +1,6 @@
-# Agentic SDLC Orchestrator Helm Chart
+# Agentic SDLC Runner Helm Chart
 
-This Helm chart deploys the Agentic SDLC Orchestrator on Kubernetes.
+This Helm chart deploys the Agentic SDLC Runner on Kubernetes.
 
 ## Prerequisites
 
@@ -13,25 +13,25 @@ This Helm chart deploys the Agentic SDLC Orchestrator on Kubernetes.
 ### Development Environment
 
 ```bash
-cd releases/agentic-sdlc-orchestrator-dev
+cd releases/agentic-sdlc-runner-dev
 helm dependency update
-helm upgrade --install agentic-sdlc-orchestrator-dev . -n agent-orchestrator-dev --create-namespace
+helm upgrade --install agentic-sdlc-runner-dev . -n agent-runner-dev --create-namespace
 ```
 
 ### Staging Environment
 
 ```bash
-cd releases/agentic-sdlc-orchestrator-stg
+cd releases/agentic-sdlc-runner-stg
 helm dependency update
-helm upgrade --install agentic-sdlc-orchestrator-stg . -n agent-orchestrator-stg --create-namespace
+helm upgrade --install agentic-sdlc-runner-stg . -n agent-runner-stg --create-namespace
 ```
 
 ### Production Environment
 
 ```bash
-cd releases/agentic-sdlc-orchestrator-prod
+cd releases/agentic-sdlc-runner-prod
 helm dependency update
-helm upgrade --install agentic-sdlc-orchestrator-prod . -n agent-orchestrator-prod --create-namespace
+helm upgrade --install agentic-sdlc-runner-prod . -n agent-runner-prod --create-namespace
 ```
 
 ## Configuration
@@ -69,7 +69,7 @@ To use GKE Workload Identity, annotate the service account:
 ```yaml
 serviceAccount:
   annotations:
-    iam.gke.io/gcp-service-account: agent-orchestrator@project-id.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: agent-runner@project-id.iam.gserviceaccount.com
 ```
 
 ## GitOps with ArgoCD
@@ -82,17 +82,17 @@ Example ArgoCD Application:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: agentic-sdlc-orchestrator-prod
+  name: agentic-sdlc-runner-prod
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/agentic-sdlc/agentic-sdlc-orchestrator.git
+    repoURL: https://github.com/tikalk/agentic-sdlc-runner.git
     targetRevision: main
-    path: releases/agentic-sdlc-orchestrator-prod
+    path: releases/agentic-sdlc-runner-prod
   destination:
     server: https://kubernetes.default.svc
-    namespace: agent-orchestrator-prod
+    namespace: agent-runner-prod
   syncPolicy:
     automated:
       prune: true
@@ -112,7 +112,7 @@ Key differences:
 ## Uninstallation
 
 ```bash
-helm uninstall agentic-sdlc-orchestrator-dev -n agent-orchestrator-dev
-helm uninstall agentic-sdlc-orchestrator-stg -n agent-orchestrator-stg
-helm uninstall agentic-sdlc-orchestrator-prod -n agent-orchestrator-prod
+helm uninstall agentic-sdlc-runner-dev -n agent-runner-dev
+helm uninstall agentic-sdlc-runner-stg -n agent-runner-stg
+helm uninstall agentic-sdlc-runner-prod -n agent-runner-prod
 ```

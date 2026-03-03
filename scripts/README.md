@@ -1,6 +1,6 @@
 # Scripts
 
-Helper scripts for the Agentic SDLC Orchestrator.
+Helper scripts for the Agentic SDLC Runner.
 
 ## Available Scripts
 
@@ -19,8 +19,8 @@ The script supports both **positional arguments** (for direct usage) and **CLI-s
 #### Usage (CLI-style - spec-kit Integration)
 ```bash
 ./spawn-pod.sh --task-id <id> --branch <branch> --repo <url> [--context-dir <dir>]
-# OR (when installed as 'agentic-sdlc-orchestrator' command)
-agentic-sdlc-orchestrator spawn --task-id <id> --branch <branch> --repo <url>
+# OR (when installed as 'agentic-sdlc-runner' command)
+agentic-sdlc-runner spawn --task-id <id> --branch <branch> --repo <url>
 ```
 
 #### Arguments
@@ -41,8 +41,8 @@ agentic-sdlc-orchestrator spawn --task-id <id> --branch <branch> --repo <url>
 - `--namespace <ns>` - Kubernetes namespace
 
 **Environment Variables:**
-- `NAMESPACE` - Kubernetes namespace (default: agent-orchestrator)
-- `RELEASE_NAME` - Helm release name (default: agentic-sdlc-orchestrator)
+- `NAMESPACE` - Kubernetes namespace (default: agent-runner)
+- `RELEASE_NAME` - Helm release name (default: agentic-sdlc-runner)
 - `SSH_SECRET_NAME` - Name of K8s secret containing SSH key (optional)
 - `ENVIRONMENT` - Environment to use: dev, stg, prod (default: dev)
 
@@ -57,7 +57,7 @@ agentic-sdlc-orchestrator spawn --task-id <id> --branch <branch> --repo <url>
 SSH_SECRET_NAME=github-deploy-key ./spawn-pod.sh task-001 specs/feature/task-001-async git@github.com:user/repo.git
 
 # Production environment
-ENVIRONMENT=prod NAMESPACE=agent-orchestrator-prod ./spawn-pod.sh task-001 specs/feature/task-001-async https://github.com/user/repo
+ENVIRONMENT=prod NAMESPACE=agent-runner-prod ./spawn-pod.sh task-001 specs/feature/task-001-async https://github.com/user/repo
 ```
 
 **spec-kit Integration (CLI-style):**
@@ -77,8 +77,8 @@ ENVIRONMENT=prod NAMESPACE=agent-orchestrator-prod ./spawn-pod.sh task-001 specs
 4. Prints useful kubectl commands for monitoring
 
 #### spec-kit Integration
-When a task has `agent_type: agentic-sdlc-orchestrator` in tasks_meta.json, spec-kit's `implement.sh` will:
-1. Detect the orchestrator script at `./scripts/spawn-pod.sh`
+When a task has `agent_type: agentic-sdlc-runner` in tasks_meta.json, spec-kit's `implement.sh` will:
+1. Detect the runner script at `./scripts/spawn-pod.sh`
 2. Call it with `--task-id`, `--branch`, `--repo`, and `--context-dir` flags
 3. Fall back to standard async delegation if the script is not found
 
@@ -95,7 +95,7 @@ Streams logs from a Kubernetes pod to stdout.
 - `pod-name` - Name of the pod to tail logs from
 
 **Environment Variables:**
-- `NAMESPACE` - Kubernetes namespace (default: agent-orchestrator)
+- `NAMESPACE` - Kubernetes namespace (default: agent-runner)
 
 **Examples:**
 
@@ -104,7 +104,7 @@ Streams logs from a Kubernetes pod to stdout.
 ./tail-logs.sh agent-task-001
 
 # Production namespace
-NAMESPACE=agent-orchestrator-prod ./tail-logs.sh agent-task-001
+NAMESPACE=agent-runner-prod ./tail-logs.sh agent-task-001
 ```
 
 ## Prerequisites
@@ -118,10 +118,10 @@ NAMESPACE=agent-orchestrator-prod ./tail-logs.sh agent-task-001
 
 1. **Deploy the Helm chart first:**
    ```bash
-   cd releases/agentic-sdlc-orchestrator-dev
+   cd releases/agentic-sdlc-runner-dev
    helm dependency update
-   helm upgrade --install agentic-sdlc-orchestrator-dev . \
-     -n agent-orchestrator-dev --create-namespace
+   helm upgrade --install agentic-sdlc-runner-dev . \
+     -n agent-runner-dev --create-namespace
    ```
 
 2. **Then spawn task pods:**

@@ -1,6 +1,6 @@
-# SPEC.md - K8s Agent Orchestration via OpenCode Subagents
+# SPEC.md - K8s Agent Execution via OpenCode Subagents
 
-**Project Name**: Agentic SDLC Orchestrator  
+**Project Name**: Agentic SDLC Runner  
 **Version**: 1.0.0  
 **Date**: 2026-02-14  
 **Status**: Draft
@@ -22,7 +22,7 @@ Enable local OpenCode CLI sessions to spawn and control remote AI agent pods run
 
 ### Out of Scope
 
-- External orchestrator/controller (we use subagents)
+- External controller (we use subagents)
 - K-Agent framework
 - Beads issue tracking
 - Web dashboard
@@ -89,10 +89,10 @@ Enable local OpenCode CLI sessions to spawn and control remote AI agent pods run
 
 | Component | Purpose | Location |
 |-----------|---------|----------|
-| Helm Chart | K8s resources templating | `charts/agentic-sdlc-orchestrator/` |
-| Release (Dev) | Dev environment values | `releases/agentic-sdlc-orchestrator-dev/` |
-| Release (Stg) | Staging environment values | `releases/agentic-sdlc-orchestrator-stg/` |
-| Release (Prod) | Production environment values | `releases/agentic-sdlc-orchestrator-prod/` |
+| Helm Chart | K8s resources templating | `charts/agentic-sdlc-runner/` |
+| Release (Dev) | Dev environment values | `releases/agentic-sdlc-runner-dev/` |
+| Release (Stg) | Staging environment values | `releases/agentic-sdlc-runner-stg/` |
+| Release (Prod) | Production environment values | `releases/agentic-sdlc-runner-prod/` |
 
 ### 3.2 Helper Scripts
 
@@ -124,23 +124,23 @@ Enable local OpenCode CLI sessions to spawn and control remote AI agent pods run
 
 ### 4.1 Helm Deployment
 
-Deploy the orchestrator using Helm:
+Deploy the runner using Helm:
 
 ```bash
 # Development
-helm upgrade --install agentic-sdlc-orchestrator-dev \
-  releases/agentic-sdlc-orchestrator-dev \
-  -n agent-orchestrator-dev --create-namespace
+helm upgrade --install agentic-sdlc-runner-dev \
+  releases/agentic-sdlc-runner-dev \
+  -n agent-runner-dev --create-namespace
 
 # Staging
-helm upgrade --install agentic-sdlc-orchestrator-stg \
-  releases/agentic-sdlc-orchestrator-stg \
-  -n agent-orchestrator-stg --create-namespace
+helm upgrade --install agentic-sdlc-runner-stg \
+  releases/agentic-sdlc-runner-stg \
+  -n agent-runner-stg --create-namespace
 
 # Production
-helm upgrade --install agentic-sdlc-orchestrator-prod \
-  releases/agentic-sdlc-orchestrator-prod \
-  -n agent-orchestrator-prod --create-namespace
+helm upgrade --install agentic-sdlc-runner-prod \
+  releases/agentic-sdlc-runner-prod \
+  -n agent-runner-prod --create-namespace
 ```
 
 Spawn a task pod using the helper script (after Helm deployment):
@@ -153,7 +153,7 @@ Spawn a task pod using the helper script (after Helm deployment):
 SSH_SECRET_NAME=github-deploy-key ./scripts/spawn-pod.sh task-001 specs/feature/task-001-async git@github.com:user/repo.git
 
 # Production environment
-ENVIRONMENT=prod NAMESPACE=agent-orchestrator-prod ./scripts/spawn-pod.sh task-001 specs/feature/task-001-async https://github.com/user/repo
+ENVIRONMENT=prod NAMESPACE=agent-runner-prod ./scripts/spawn-pod.sh task-001 specs/feature/task-001-async https://github.com/user/repo
 ```
 
 The script uses `helm template` to generate the pod manifest from the release charts and applies it with `kubectl apply`.
@@ -166,7 +166,7 @@ Stream logs from a K8s pod using kubectl:
 #!/bin/bash
 # Tails logs from a K8s pod to stdout
 
-NAMESPACE="${NAMESPACE:-agent-orchestrator}"
+NAMESPACE="${NAMESPACE:-agent-runner}"
 POD_NAME="$1"
 
 if [ -z "$POD_NAME" ]; then
@@ -182,17 +182,17 @@ kubectl logs -f -n "$NAMESPACE" "$POD_NAME"
 See `templates/pod-template.yaml` for the full pod spec template. Key features:
 
 ```yaml
-{{- define "agentic-sdlc-orchestrator.podTemplate" -}}
+{{- define "agentic-sdlc-runner.podTemplate" -}}
 restartPolicy: Never
-serviceAccountName: {{ include "agentic-sdlc-orchestrator.serviceAccountName" . }}
+serviceAccountName: {{ include "agentic-sdlc-runner.serviceAccountName" . }}
 containers:
   - name: agent
-    image: "{{ .Values.pod.image.repository }}:{{ include "agentic-sdlc-orchestrator.imageTag" . }}"
+    image: "{{ .Values.pod.image.repository }}:{{ include "agentic-sdlc-runner.imageTag" . }}"
     env:
       - name: OPENCODE_SERVER_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: {{ include "agentic-sdlc-orchestrator.externalSecretName" . }}
+            name: {{ include "agentic-sdlc-runner.externalSecretName" . }}
             key: server-password
       - name: GIT_REPO
         value: "{{ .Values.task.defaultRepo }}"
@@ -249,9 +249,9 @@ See `templates/namespace.yaml`:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ include "agentic-sdlc-orchestrator.namespace" . }}
+  name: {{ include "agentic-sdlc-runner.namespace" . }}
   labels:
-    {{- include "agentic-sdlc-orchestrator.labels" . | nindent 4 }}
+    {{- include "agentic-sdlc-runner.labels" . | nindent 4 }}
 {{- end }}
 ```
 
@@ -269,14 +269,14 @@ See `templates/external-secret.yaml`:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: {{ include "agentic-sdlc-orchestrator.externalSecretName" . }}
+  name: {{ include "agentic-sdlc-runner.externalSecretName" . }}
 spec:
   refreshInterval: {{ .Values.externalSecret.refreshInterval }}
   secretStoreRef:
     name: {{ .Values.externalSecret.secretStore.name }}
     kind: {{ .Values.externalSecret.secretStore.kind }}
   target:
-    name: {{ include "agentic-sdlc-orchestrator.externalSecretName" . }}
+    name: {{ include "agentic-sdlc-runner.externalSecretName" . }}
   data:
     - secretKey: server-password
       remoteRef:
@@ -316,13 +316,13 @@ CMD ["/bin/bash"]
 ## 8. Directory Structure
 
 ```
-agentic-sdlc-orchestrator/
+agentic-sdlc-runner/
 ├── SPEC.md                      # This file
 ├── PRD.md                       # Product requirements
 ├── docker/
 │   └── Dockerfile.opencode       # OpenCode container image
 ├── charts/
-│   └── agentic-sdlc-orchestrator/  # Helm chart
+│   └── agentic-sdlc-runner/  # Helm chart
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       ├── README.md
@@ -335,15 +335,15 @@ agentic-sdlc-orchestrator/
 │           ├── external-secret.yaml
 │           └── pod-template.yaml
 ├── releases/
-│   ├── agentic-sdlc-orchestrator-dev/
+│   ├── agentic-sdlc-runner-dev/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml          # GitOps config
-│   ├── agentic-sdlc-orchestrator-stg/
+│   ├── agentic-sdlc-runner-stg/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml
-│   └── agentic-sdlc-orchestrator-prod/
+│   └── agentic-sdlc-runner-prod/
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       └── argocd.yaml

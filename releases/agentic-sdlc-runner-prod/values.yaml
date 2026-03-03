@@ -1,19 +1,19 @@
 ---
-# Production environment values for agentic-sdlc-orchestrator
+# Production environment values for agentic-sdlc-runner
 
-agentic-sdlc-orchestrator:
-  nameOverride: "agentic-sdlc-orchestrator-prod"
-  fullnameOverride: "agentic-sdlc-orchestrator-prod"
+agentic-sdlc-runner:
+  nameOverride: "agentic-sdlc-runner-prod"
+  fullnameOverride: "agentic-sdlc-runner-prod"
   
   namespace:
     create: true
-    name: agent-orchestrator-prod
+    name: agent-runner-prod
   
   serviceAccount:
     create: true
     annotations:
       # Example GKE Workload Identity annotation
-      # iam.gke.io/gcp-service-account: agent-orchestrator@project-id.iam.gserviceaccount.com
+      # iam.gke.io/gcp-service-account: agent-runner@project-id.iam.gserviceaccount.com
   
   externalSecret:
     enabled: true

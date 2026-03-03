@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://opencode.ai/install.sh | bash
+RUN curl -fsSL https://opencode.ai/install | bash
 
 RUN mkdir -p /workspace
 
@@ -19,4 +19,15 @@ RUN mkdir -p /root/.ssh && \
 
 WORKDIR /workspace
 
-CMD ["/bin/bash"]
+# Copy entrypoint script
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose OpenCode server port
+EXPOSE 4096
+
+# Set environment defaults
+ENV OPENCODE_SERVER_USERNAME=opencode
+ENV TASK_CONTEXT_PATH=/workspace
+
+ENTRYPOINT ["/entrypoint.sh"]

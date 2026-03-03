@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "agentic-sdlc-orchestrator.name" -}}
+{{- define "agentic-sdlc-runner.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "agentic-sdlc-orchestrator.fullname" -}}
+{{- define "agentic-sdlc-runner.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "agentic-sdlc-orchestrator.chart" -}}
+{{- define "agentic-sdlc-runner.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "agentic-sdlc-orchestrator.labels" -}}
-helm.sh/chart: {{ include "agentic-sdlc-orchestrator.chart" . }}
-{{ include "agentic-sdlc-orchestrator.selectorLabels" . }}
+{{- define "agentic-sdlc-runner.labels" -}}
+helm.sh/chart: {{ include "agentic-sdlc-runner.chart" . }}
+{{ include "agentic-sdlc-runner.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "agentic-sdlc-orchestrator.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "agentic-sdlc-orchestrator.name" . }}
+{{- define "agentic-sdlc-runner.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "agentic-sdlc-runner.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "agentic-sdlc-orchestrator.serviceAccountName" -}}
+{{- define "agentic-sdlc-runner.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "agentic-sdlc-orchestrator.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "agentic-sdlc-runner.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -64,7 +64,7 @@ Create the name of the service account to use
 {{/*
 Create the namespace name
 */}}
-{{- define "agentic-sdlc-orchestrator.namespace" -}}
+{{- define "agentic-sdlc-runner.namespace" -}}
 {{- if .Values.namespace.name }}
 {{- .Values.namespace.name }}
 {{- else }}
@@ -75,25 +75,25 @@ Create the namespace name
 {{/*
 Create the external secret name
 */}}
-{{- define "agentic-sdlc-orchestrator.externalSecretName" -}}
+{{- define "agentic-sdlc-runner.externalSecretName" -}}
 {{- if .Values.externalSecret.name }}
 {{- .Values.externalSecret.name }}
 {{- else }}
-{{- printf "%s-server-password" (include "agentic-sdlc-orchestrator.fullname" .) }}
+{{- printf "%s-server-password" (include "agentic-sdlc-runner.fullname" .) }}
 {{- end }}
 {{- end }}
 
 {{/*
 Create the configmap name
 */}}
-{{- define "agentic-sdlc-orchestrator.configMapName" -}}
-{{- printf "%s-config" (include "agentic-sdlc-orchestrator.fullname" .) }}
+{{- define "agentic-sdlc-runner.configMapName" -}}
+{{- printf "%s-config" (include "agentic-sdlc-runner.fullname" .) }}
 {{- end }}
 
 {{/*
 Get the image tag
 */}}
-{{- define "agentic-sdlc-orchestrator.imageTag" -}}
+{{- define "agentic-sdlc-runner.imageTag" -}}
 {{- if .Values.pod.image.tag }}
 {{- .Values.pod.image.tag }}
 {{- else }}
@@ -104,7 +104,7 @@ Get the image tag
 {{/*
 Image pull secrets
 */}}
-{{- define "agentic-sdlc-orchestrator.imagePullSecrets" -}}
+{{- define "agentic-sdlc-runner.imagePullSecrets" -}}
 {{- if .Values.global.imagePullSecrets }}
 {{- toYaml .Values.global.imagePullSecrets }}
 {{- end }}

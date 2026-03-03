@@ -1,10 +1,10 @@
-# Agentic SDLC Orchestrator
+# Agentic SDLC Runner
 
-K8s-based async agent orchestration for Agentic SDLC. Enables running AI coding agents (OpenCode) in Kubernetes pods with full visibility from the main session.
+K8s-based async agent execution for Agentic SDLC. Enables running AI coding agents (OpenCode) in Kubernetes pods with full visibility from the main session.
 
 ## Overview
 
-This orchestrator integrates with [spec-kit](https://github.com/tikalk/agentic-sdlc-spec-kit) to run [ASYNC] tasks in Kubernetes pods while maintaining visibility through the main OpenCode session.
+This runner integrates with [spec-kit](https://github.com/tikalk/agentic-sdlc-spec-kit) to run [ASYNC] tasks in Kubernetes pods while maintaining visibility through the main OpenCode session.
 
 ### Key Features
 
@@ -12,7 +12,7 @@ This orchestrator integrates with [spec-kit](https://github.com/tikalk/agentic-s
 - **External Secrets Operator**: Secure secret management (no hardcoded passwords)
 - **Multi-environment support**: Dev, staging, and production configurations
 - **GitOps ready**: ArgoCD Application manifests included
-- **Subagent-based orchestration**: Spawns K8s pods via OpenCode subagents
+- **Subagent-based execution**: Spawns K8s pods via OpenCode subagents
 - **Git-native workflow**: Each task uses isolated git branches
 - **Log streaming**: Pod logs stream back to main session
 - **Parallel execution**: Multiple [ASYNC] tasks run concurrently
@@ -45,26 +45,26 @@ Main OpenCode Session
 
 #### Development
 ```bash
-cd releases/agentic-sdlc-orchestrator-dev
+cd releases/agentic-sdlc-runner-dev
 helm dependency update
-helm upgrade --install agentic-sdlc-orchestrator-dev . \
-  -n agent-orchestrator-dev --create-namespace
+helm upgrade --install agentic-sdlc-runner-dev . \
+  -n agent-runner-dev --create-namespace
 ```
 
 #### Staging
 ```bash
-cd releases/agentic-sdlc-orchestrator-stg
+cd releases/agentic-sdlc-runner-stg
 helm dependency update
-helm upgrade --install agentic-sdlc-orchestrator-stg . \
-  -n agent-orchestrator-stg --create-namespace
+helm upgrade --install agentic-sdlc-runner-stg . \
+  -n agent-runner-stg --create-namespace
 ```
 
 #### Production
 ```bash
-cd releases/agentic-sdlc-orchestrator-prod
+cd releases/agentic-sdlc-runner-prod
 helm dependency update
-helm upgrade --install agentic-sdlc-orchestrator-prod . \
-  -n agent-orchestrator-prod --create-namespace
+helm upgrade --install agentic-sdlc-runner-prod . \
+  -n agent-runner-prod --create-namespace
 ```
 
 ### 2. Configure External Secrets
@@ -114,8 +114,8 @@ pod:
 ### 4. Use with spec-kit
 
 ```bash
-# Initialize project with orchestrator
-specify init my-project --async-agent agentic-sdlc-orchestrator
+# Initialize project with runner
+specify init my-project --async-agent agentic-sdlc-runner
 
 # Create spec, plan, tasks
 /specify
@@ -152,13 +152,13 @@ ENVIRONMENT=prod ./scripts/spawn-pod.sh task-001 specs/feature/task-001-async ht
 kubectl run agent-task-001 \
   --image=agentic-sdlc/opencode:0.1.0 \
   --restart=Never \
-  --namespace=agent-orchestrator-dev \
+  --namespace=agent-runner-dev \
   --env="GIT_REPO=https://github.com/user/repo" \
   --env="GIT_BRANCH=specs/feature/task-001-async" \
-  --env="OPENCODE_SERVER_PASSWORD=$(kubectl get secret agentic-sdlc-orchestrator-dev-server-password -n agent-orchestrator-dev -o jsonpath='{.data.server-password}' | base64 -d)"
+  --env="OPENCODE_SERVER_PASSWORD=$(kubectl get secret agentic-sdlc-runner-dev-server-password -n agent-runner-dev -o jsonpath='{.data.server-password}' | base64 -d)"
 
 # Stream logs
-kubectl logs -f agent-task-001 -n agent-orchestrator-dev
+kubectl logs -f agent-task-001 -n agent-runner-dev
 ```
 
 ### Helper Scripts
@@ -174,14 +174,14 @@ See [scripts/README.md](scripts/README.md) for detailed usage.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `NAMESPACE` | K8s namespace | `agent-orchestrator` |
+| `NAMESPACE` | K8s namespace | `agent-runner` |
 | `OPENCODE_SERVER_PASSWORD` | OpenCode server password | From ExternalSecret |
 | `GIT_REPO` | Repository URL | - |
 | `GIT_BRANCH` | Git branch to clone | `main` |
 
 ## Configuration
 
-See [charts/agentic-sdlc-orchestrator/README.md](charts/agentic-sdlc-orchestrator/README.md) for detailed Helm configuration options.
+See [charts/agentic-sdlc-runner/README.md](charts/agentic-sdlc-runner/README.md) for detailed Helm configuration options.
 
 ### Key Parameters
 
@@ -201,7 +201,7 @@ Each environment includes an `argocd.yaml` configuration file:
 
 ```bash
 # Apply ArgoCD Application
-kubectl apply -f releases/agentic-sdlc-orchestrator-prod/argocd.yaml
+kubectl apply -f releases/agentic-sdlc-runner-prod/argocd.yaml
 ```
 
 Or create the Application manually:
@@ -210,17 +210,17 @@ Or create the Application manually:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: agentic-sdlc-orchestrator-prod
+  name: agentic-sdlc-runner-prod
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/tikalk/agentic-sdlc-orchestrator.git
+    repoURL: https://github.com/tikalk/agentic-sdlc-runner.git
     targetRevision: main
-    path: releases/agentic-sdlc-orchestrator-prod
+    path: releases/agentic-sdlc-runner-prod
   destination:
     server: https://kubernetes.default.svc
-    namespace: agent-orchestrator-prod
+    namespace: agent-runner-prod
   syncPolicy:
     automated:
       prune: true
@@ -231,7 +231,7 @@ spec:
 
 ## Integration with spec-kit
 
-The orchestrator integrates with spec-kit's `--async-agent` flag. When running `/implement`, [ASYNC] tasks automatically spawn K8s pods via the orchestrator.
+The runner integrates with spec-kit's `--async-agent` flag. When running `/implement`, [ASYNC] tasks automatically spawn K8s pods via the runner.
 
 See [SPEC.md](./SPEC.md) for technical details.
 
@@ -240,14 +240,14 @@ See [SPEC.md](./SPEC.md) for technical details.
 ### Project Structure
 
 ```
-agentic-sdlc-orchestrator/
+agentic-sdlc-runner/
 ├── SPEC.md                      # Technical specification
 ├── PRD.md                       # Product requirements
 ├── pyproject.toml               # Python package config
 ├── docker/
 │   └── Dockerfile.opencode      # OpenCode container
 ├── charts/
-│   └── agentic-sdlc-orchestrator/  # Helm chart
+│   └── agentic-sdlc-runner/  # Helm chart
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       ├── README.md
@@ -260,15 +260,15 @@ agentic-sdlc-orchestrator/
 │           ├── external-secret.yaml
 │           └── pod-template.yaml
 ├── releases/
-│   ├── agentic-sdlc-orchestrator-dev/
+│   ├── agentic-sdlc-runner-dev/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml
-│   ├── agentic-sdlc-orchestrator-stg/
+│   ├── agentic-sdlc-runner-stg/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml
-│   └── agentic-sdlc-orchestrator-prod/
+│   └── agentic-sdlc-runner-prod/
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       └── argocd.yaml
@@ -282,17 +282,17 @@ agentic-sdlc-orchestrator/
 
 ```bash
 # Clone repository
-git clone https://github.com/tikalk/agentic-sdlc-orchestrator.git
-cd agentic-sdlc-orchestrator
+git clone https://github.com/tikalk/agentic-sdlc-runner.git
+cd agentic-sdlc-runner
 
 # Install dependencies
 pip install -e .
 
 # Test Helm templates
-helm template agentic-sdlc-orchestrator charts/agentic-sdlc-orchestrator
+helm template agentic-sdlc-runner charts/agentic-sdlc-runner
 
 # Lint Helm chart
-helm lint charts/agentic-sdlc-orchestrator
+helm lint charts/agentic-sdlc-runner
 ```
 
 ## Security
@@ -306,13 +306,13 @@ helm lint charts/agentic-sdlc-orchestrator
 
 ```bash
 # Development
-helm uninstall agentic-sdlc-orchestrator-dev -n agent-orchestrator-dev
+helm uninstall agentic-sdlc-runner-dev -n agent-runner-dev
 
 # Staging
-helm uninstall agentic-sdlc-orchestrator-stg -n agent-orchestrator-stg
+helm uninstall agentic-sdlc-runner-stg -n agent-runner-stg
 
 # Production
-helm uninstall agentic-sdlc-orchestrator-prod -n agent-orchestrator-prod
+helm uninstall agentic-sdlc-runner-prod -n agent-runner-prod
 ```
 
 ## License

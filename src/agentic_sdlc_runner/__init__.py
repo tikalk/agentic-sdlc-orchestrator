@@ -1,5 +1,5 @@
 """
-Agentic SDLC Orchestrator - CLI entry point
+Agentic SDLC Runner - CLI entry point
 """
 
 import subprocess
@@ -58,7 +58,7 @@ def run_logs(args):
 
 def run_list(args):
     """List all running agent pods."""
-    cmd = ["kubectl", "get", "pods", "-l", "app=agent-orchestrator", "-o", "wide"]
+    cmd = ["kubectl", "get", "pods", "-l", "app=agent-runner", "-o", "wide"]
     result = subprocess.run(cmd, capture_output=True, text=True)
     print(result.stdout or result.stderr)
     return result.returncode
@@ -66,7 +66,7 @@ def run_list(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Agentic SDLC Orchestrator - K8s-based async task execution"
+        description="Agentic SDLC Runner - K8s-based async task execution"
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 

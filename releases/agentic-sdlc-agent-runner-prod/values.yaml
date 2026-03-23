@@ -1,40 +1,42 @@
 ---
-# Staging environment values for agentic-sdlc-runner
+# Production environment values for agentic-sdlc-agent-runner
 
-agentic-sdlc-runner:
-  nameOverride: "agentic-sdlc-runner-stg"
-  fullnameOverride: "agentic-sdlc-runner-stg"
+agentic-sdlc-agent-runner:
+  nameOverride: "agentic-sdlc-agent-runner-prod"
+  fullnameOverride: "agentic-sdlc-agent-runner-prod"
   
   namespace:
     create: true
-    name: agent-runner-stg
+    name: agent-runner-prod
   
   serviceAccount:
     create: true
-    annotations: {}
+    annotations:
+      # Example GKE Workload Identity annotation
+      # iam.gke.io/gcp-service-account: agent-runner@project-id.iam.gserviceaccount.com
   
   externalSecret:
     enabled: true
     secretStore:
-      name: secret-store-stg
+      name: secret-store-prod
       kind: ClusterSecretStore
     remoteRef:
-      key: agentic-sdlc/stg/server-password
+      key: agentic-sdlc/prod/server-password
     refreshInterval: 10m
   
   pod:
     image:
       repository: agentic-sdlc/opencode
       pullPolicy: IfNotPresent
-      tag: "0.1.0-stg"
+      tag: "0.1.0"
     
     resources:
       limits:
+        cpu: "4"
+        memory: "8Gi"
+      requests:
         cpu: "2"
         memory: "4Gi"
-      requests:
-        cpu: "1"
-        memory: "2Gi"
     
     sshSecret:
       enabled: false

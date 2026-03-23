@@ -13,25 +13,25 @@ This Helm chart deploys the Agentic SDLC Runner on Kubernetes.
 ### Development Environment
 
 ```bash
-cd releases/agentic-sdlc-runner-dev
+cd releases/agentic-sdlc-agent-runner-dev
 helm dependency update
-helm upgrade --install agentic-sdlc-runner-dev . -n agent-runner-dev --create-namespace
+helm upgrade --install agentic-sdlc-agent-runner-dev . -n agent-runner-dev --create-namespace
 ```
 
 ### Staging Environment
 
 ```bash
-cd releases/agentic-sdlc-runner-stg
+cd releases/agentic-sdlc-agent-runner-stg
 helm dependency update
-helm upgrade --install agentic-sdlc-runner-stg . -n agent-runner-stg --create-namespace
+helm upgrade --install agentic-sdlc-agent-runner-stg . -n agent-runner-stg --create-namespace
 ```
 
 ### Production Environment
 
 ```bash
-cd releases/agentic-sdlc-runner-prod
+cd releases/agentic-sdlc-agent-runner-prod
 helm dependency update
-helm upgrade --install agentic-sdlc-runner-prod . -n agent-runner-prod --create-namespace
+helm upgrade --install agentic-sdlc-agent-runner-prod . -n agent-runner-prod --create-namespace
 ```
 
 ## Configuration
@@ -82,14 +82,14 @@ Example ArgoCD Application:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: agentic-sdlc-runner-prod
+  name: agentic-sdlc-agent-runner-prod
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/tikalk/agentic-sdlc-runner.git
+    repoURL: https://github.com/tikalk/agentic-sdlc-agent-runner.git
     targetRevision: main
-    path: releases/agentic-sdlc-runner-prod
+    path: releases/agentic-sdlc-agent-runner-prod
   destination:
     server: https://kubernetes.default.svc
     namespace: agent-runner-prod
@@ -112,7 +112,7 @@ Key differences:
 ## Uninstallation
 
 ```bash
-helm uninstall agentic-sdlc-runner-dev -n agent-runner-dev
-helm uninstall agentic-sdlc-runner-stg -n agent-runner-stg
-helm uninstall agentic-sdlc-runner-prod -n agent-runner-prod
+helm uninstall agentic-sdlc-agent-runner-dev -n agent-runner-dev
+helm uninstall agentic-sdlc-agent-runner-stg -n agent-runner-stg
+helm uninstall agentic-sdlc-agent-runner-prod -n agent-runner-prod
 ```

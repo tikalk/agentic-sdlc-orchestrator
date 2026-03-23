@@ -1,11 +1,11 @@
 ---
-appName: agentic-sdlc-runner-stg
+appName: agentic-sdlc-agent-runner-stg
 namespace: agent-runner-stg
 serverName: agentic-sdlc-stg-gcp-server
 source:
-  repoURL: https://github.com/agentic-sdlc/agentic-sdlc-runner.git
+  repoURL: https://github.com/agentic-sdlc/agentic-sdlc-agent-runner.git
   targetRevision: main
-  path: releases/agentic-sdlc-runner-stg
+  path: releases/agentic-sdlc-agent-runner-stg
 syncPolicy:
   automated:
     prune: true

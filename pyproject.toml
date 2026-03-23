@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agentic-sdlc-runner"
+name = "agentic-sdlc-agent-runner"
 version = "0.1.0"
 description = "K8s-based async agent execution for Agentic SDLC"
 readme = "README.md"
@@ -39,13 +39,13 @@ dev = [
 ]
 
 [project.scripts]
-agentic-sdlc-runner = "agentic_sdlc_runner.cli:main"
+agentic-sdlc-agent-runner = "agentic_sdlc_agent_runner.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-dir]
-agentic_sdlc_runner = "src/agentic_sdlc_runner"
+agentic_sdlc_agent_runner = "src/agentic_sdlc_agent_runner"
 
 [tool.black]
 line-length = 100

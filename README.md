@@ -45,25 +45,25 @@ Main OpenCode Session
 
 #### Development
 ```bash
-cd releases/agentic-sdlc-runner-dev
+cd releases/agentic-sdlc-agent-runner-dev
 helm dependency update
-helm upgrade --install agentic-sdlc-runner-dev . \
+helm upgrade --install agentic-sdlc-agent-runner-dev . \
   -n agent-runner-dev --create-namespace
 ```
 
 #### Staging
 ```bash
-cd releases/agentic-sdlc-runner-stg
+cd releases/agentic-sdlc-agent-runner-stg
 helm dependency update
-helm upgrade --install agentic-sdlc-runner-stg . \
+helm upgrade --install agentic-sdlc-agent-runner-stg . \
   -n agent-runner-stg --create-namespace
 ```
 
 #### Production
 ```bash
-cd releases/agentic-sdlc-runner-prod
+cd releases/agentic-sdlc-agent-runner-prod
 helm dependency update
-helm upgrade --install agentic-sdlc-runner-prod . \
+helm upgrade --install agentic-sdlc-agent-runner-prod . \
   -n agent-runner-prod --create-namespace
 ```
 
@@ -115,7 +115,7 @@ pod:
 
 ```bash
 # Initialize project with runner
-specify init my-project --async-agent agentic-sdlc-runner
+specify init my-project --async-agent agentic-sdlc-agent-runner
 
 # Create spec, plan, tasks
 /specify
@@ -155,7 +155,7 @@ kubectl run agent-task-001 \
   --namespace=agent-runner-dev \
   --env="GIT_REPO=https://github.com/user/repo" \
   --env="GIT_BRANCH=specs/feature/task-001-async" \
-  --env="OPENCODE_SERVER_PASSWORD=$(kubectl get secret agentic-sdlc-runner-dev-server-password -n agent-runner-dev -o jsonpath='{.data.server-password}' | base64 -d)"
+  --env="OPENCODE_SERVER_PASSWORD=$(kubectl get secret agentic-sdlc-agent-runner-dev-server-password -n agent-runner-dev -o jsonpath='{.data.server-password}' | base64 -d)"
 
 # Stream logs
 kubectl logs -f agent-task-001 -n agent-runner-dev
@@ -181,7 +181,7 @@ See [scripts/README.md](scripts/README.md) for detailed usage.
 
 ## Configuration
 
-See [charts/agentic-sdlc-runner/README.md](charts/agentic-sdlc-runner/README.md) for detailed Helm configuration options.
+See [charts/agentic-sdlc-agent-runner/README.md](charts/agentic-sdlc-agent-runner/README.md) for detailed Helm configuration options.
 
 ### Key Parameters
 
@@ -201,7 +201,7 @@ Each environment includes an `argocd.yaml` configuration file:
 
 ```bash
 # Apply ArgoCD Application
-kubectl apply -f releases/agentic-sdlc-runner-prod/argocd.yaml
+kubectl apply -f releases/agentic-sdlc-agent-runner-prod/argocd.yaml
 ```
 
 Or create the Application manually:
@@ -210,14 +210,14 @@ Or create the Application manually:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: agentic-sdlc-runner-prod
+  name: agentic-sdlc-agent-runner-prod
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/tikalk/agentic-sdlc-runner.git
+    repoURL: https://github.com/tikalk/agentic-sdlc-agent-runner.git
     targetRevision: main
-    path: releases/agentic-sdlc-runner-prod
+    path: releases/agentic-sdlc-agent-runner-prod
   destination:
     server: https://kubernetes.default.svc
     namespace: agent-runner-prod
@@ -240,14 +240,14 @@ See [SPEC.md](./SPEC.md) for technical details.
 ### Project Structure
 
 ```
-agentic-sdlc-runner/
+agentic-sdlc-agent-runner/
 ├── SPEC.md                      # Technical specification
 ├── PRD.md                       # Product requirements
 ├── pyproject.toml               # Python package config
 ├── docker/
 │   └── Dockerfile.opencode      # OpenCode container
 ├── charts/
-│   └── agentic-sdlc-runner/  # Helm chart
+│   └── agentic-sdlc-agent-runner/  # Helm chart
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       ├── README.md
@@ -260,15 +260,15 @@ agentic-sdlc-runner/
 │           ├── external-secret.yaml
 │           └── pod-template.yaml
 ├── releases/
-│   ├── agentic-sdlc-runner-dev/
+│   ├── agentic-sdlc-agent-runner-dev/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml
-│   ├── agentic-sdlc-runner-stg/
+│   ├── agentic-sdlc-agent-runner-stg/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml
-│   └── agentic-sdlc-runner-prod/
+│   └── agentic-sdlc-agent-runner-prod/
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       └── argocd.yaml
@@ -282,17 +282,17 @@ agentic-sdlc-runner/
 
 ```bash
 # Clone repository
-git clone https://github.com/tikalk/agentic-sdlc-runner.git
-cd agentic-sdlc-runner
+git clone https://github.com/tikalk/agentic-sdlc-agent-runner.git
+cd agentic-sdlc-agent-runner
 
 # Install dependencies
 pip install -e .
 
 # Test Helm templates
-helm template agentic-sdlc-runner charts/agentic-sdlc-runner
+helm template agentic-sdlc-agent-runner charts/agentic-sdlc-agent-runner
 
 # Lint Helm chart
-helm lint charts/agentic-sdlc-runner
+helm lint charts/agentic-sdlc-agent-runner
 ```
 
 ## Security
@@ -306,13 +306,13 @@ helm lint charts/agentic-sdlc-runner
 
 ```bash
 # Development
-helm uninstall agentic-sdlc-runner-dev -n agent-runner-dev
+helm uninstall agentic-sdlc-agent-runner-dev -n agent-runner-dev
 
 # Staging
-helm uninstall agentic-sdlc-runner-stg -n agent-runner-stg
+helm uninstall agentic-sdlc-agent-runner-stg -n agent-runner-stg
 
 # Production
-helm uninstall agentic-sdlc-runner-prod -n agent-runner-prod
+helm uninstall agentic-sdlc-agent-runner-prod -n agent-runner-prod
 ```
 
 ## License

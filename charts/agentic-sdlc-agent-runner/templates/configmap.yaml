@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "agentic-sdlc-runner.configMapName" . }}
-  namespace: {{ include "agentic-sdlc-runner.namespace" . }}
+  name: {{ include "agentic-sdlc-agent-runner.configMapName" . }}
+  namespace: {{ include "agentic-sdlc-agent-runner.namespace" . }}
   labels:
-    {{- include "agentic-sdlc-runner.labels" . | nindent 4 }}
+    {{- include "agentic-sdlc-agent-runner.labels" . | nindent 4 }}
 data:
   # Server password is now sourced from ExternalSecret, not ConfigMap
   # See external-secret.yaml for secret management

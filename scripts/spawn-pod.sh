@@ -1,7 +1,7 @@
 #!/bin/bash
 # spawn-pod.sh - Creates a K8s pod for an [ASYNC] task using Helm templates
 # Usage: spawn-pod.sh [OPTIONS] <task-id> <branch-name> <repo-url> [context-dir]
-#   OR: agentic-sdlc-runner spawn --task-id <id> --branch <branch> --repo <repo> --context-dir <dir>
+#   OR: agentic-sdlc-agent-runner spawn --task-id <id> --branch <branch> --repo <repo> --context-dir <dir>
 
 set -e
 
@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 NAMESPACE="${NAMESPACE:-agent-runner}"
-RELEASE_NAME="${RELEASE_NAME:-agentic-sdlc-runner}"
+RELEASE_NAME="${RELEASE_NAME:-agentic-sdlc-agent-runner}"
 SSH_SECRET_NAME="${SSH_SECRET_NAME:-}"
 ENVIRONMENT="${ENVIRONMENT:-dev}"
 
@@ -50,7 +50,7 @@ parse_cli_args() {
                 exit 0
                 ;;
             spawn)
-                # Handle 'agentic-sdlc-runner spawn' syntax
+                # Handle 'agentic-sdlc-agent-runner spawn' syntax
                 shift
                 ;;
             *)
@@ -81,7 +81,7 @@ parse_cli_args() {
 
 usage() {
     echo "Usage: $0 [OPTIONS] <task-id> <branch-name> <repo-url> [context-dir]"
-    echo "   OR: agentic-sdlc-runner spawn --task-id <id> --branch <branch> --repo <repo> [--context-dir <dir>]"
+    echo "   OR: agentic-sdlc-agent-runner spawn --task-id <id> --branch <branch> --repo <repo> [--context-dir <dir>]"
     echo ""
     echo "Arguments (positional):"
     echo "  task-id      Unique identifier for the task (e.g., task-001)"
@@ -101,7 +101,7 @@ usage() {
     echo ""
     echo "Environment Variables:"
     echo "  NAMESPACE        Kubernetes namespace (default: agent-runner)"
-    echo "  RELEASE_NAME     Helm release name (default: agentic-sdlc-runner)"
+    echo "  RELEASE_NAME     Helm release name (default: agentic-sdlc-agent-runner)"
     echo "  SSH_SECRET_NAME  Name of K8s secret containing SSH key (optional)"
     echo "  ENVIRONMENT      Environment to use: dev, stg, prod (default: dev)"
     echo ""
@@ -110,7 +110,7 @@ usage() {
     echo "  $0 task-001 specs/feature/task-001-async https://github.com/user/repo"
     echo ""
     echo "  # CLI-style arguments (spec-kit integration)"
-    echo "  agentic-sdlc-runner spawn --task-id task-001 --branch specs/feature/task-001-async --repo https://github.com/user/repo"
+    echo "  agentic-sdlc-agent-runner spawn --task-id task-001 --branch specs/feature/task-001-async --repo https://github.com/user/repo"
     echo ""
     echo "  # With SSH authentication"
     echo "  SSH_SECRET_NAME=github-deploy-key $0 task-001 specs/feature/task-001-async git@github.com:user/repo.git"
@@ -183,9 +183,9 @@ echo "Building pod manifest with Helm..."
 # Determine chart prefix (for subchart deployments)
 CHART_PREFIX=""
 if [ -f "$RELEASE_DIR/Chart.yaml" ]; then
-    # Check if this is a wrapper chart with agentic-sdlc-runner as dependency
-    if grep -q "agentic-sdlc-runner" "$RELEASE_DIR/Chart.yaml" 2>/dev/null; then
-        CHART_PREFIX="agentic-sdlc-runner."
+    # Check if this is a wrapper chart with agentic-sdlc-agent-runner as dependency
+    if grep -q "agentic-sdlc-agent-runner" "$RELEASE_DIR/Chart.yaml" 2>/dev/null; then
+        CHART_PREFIX="agentic-sdlc-agent-runner."
     fi
 fi
 

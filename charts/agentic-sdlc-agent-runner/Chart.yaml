@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
-name: agentic-sdlc-runner
+name: agentic-sdlc-agent-runner
 description: Helm chart for Agentic SDLC Runner - Kubernetes-based task execution system
 type: application
 version: 0.1.0

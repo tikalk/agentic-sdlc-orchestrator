@@ -394,17 +394,17 @@ Main Session → Subagent → scripts/spawn-pod.sh → K8s Pod
 
 ```bash
 # Development
-helm upgrade --install agentic-sdlc-runner-dev \
-  releases/agentic-sdlc-runner-dev \
+helm upgrade --install agentic-sdlc-agent-runner-dev \
+  releases/agentic-sdlc-agent-runner-dev \
   -n agent-runner-dev --create-namespace
 
 # Staging
-helm upgrade --install agentic-sdlc-runner-stg \
-  releases/agentic-sdlc-runner-stg \
+helm upgrade --install agentic-sdlc-agent-runner-stg \
+  releases/agentic-sdlc-agent-runner-stg \
   -n agent-runner-stg --create-namespace
 
 # Production
-helm upgrade --install agentic-sdlc-runner-prod \
-  releases/agentic-sdlc-runner-prod \
+helm upgrade --install agentic-sdlc-agent-runner-prod \
+  releases/agentic-sdlc-agent-runner-prod \
   -n agent-runner-prod --create-namespace
 ```

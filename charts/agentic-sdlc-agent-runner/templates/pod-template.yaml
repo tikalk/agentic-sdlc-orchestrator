@@ -2,7 +2,7 @@
 This is a pod template that can be used as a Job or CronJob template.
 It's not deployed directly but referenced by the spawn-pod script.
 */}}
-{{- define "agentic-sdlc-runner.podTemplate" -}}
+{{- define "agentic-sdlc-agent-runner.podTemplate" -}}
 restartPolicy: Always
 {{- if .Values.pod.imagePullSecrets }}
 imagePullSecrets:
@@ -11,7 +11,7 @@ imagePullSecrets:
 imagePullSecrets:
   {{- toYaml .Values.global.imagePullSecrets | nindent 2 }}
 {{- end }}
-serviceAccountName: {{ include "agentic-sdlc-runner.serviceAccountName" . }}
+serviceAccountName: {{ include "agentic-sdlc-agent-runner.serviceAccountName" . }}
 securityContext:
   {{- toYaml .Values.pod.securityContext | nindent 2 }}
 {{- if or .Values.pod.sshSecret.enabled .Values.pod.extraVolumes }}
@@ -28,7 +28,7 @@ volumes:
 {{- end }}
 containers:
   - name: agent
-    image: "{{ .Values.pod.image.repository }}:{{ include "agentic-sdlc-runner.imageTag" . }}"
+    image: "{{ .Values.pod.image.repository }}:{{ include "agentic-sdlc-agent-runner.imageTag" . }}"
     imagePullPolicy: {{ .Values.pod.image.pullPolicy }}
     securityContext:
       {{- toYaml .Values.pod.containerSecurityContext | nindent 6 }}
@@ -49,7 +49,7 @@ containers:
         protocol: TCP
     envFrom:
       - secretRef:
-          name: {{ include "agentic-sdlc-runner.externalSecretName" . }}
+          name: {{ include "agentic-sdlc-agent-runner.externalSecretName" . }}
     env:
       - name: OPENCODE_SERVER_USERNAME
         value: "opencode"

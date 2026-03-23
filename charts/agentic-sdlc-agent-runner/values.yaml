@@ -1,5 +1,5 @@
 ---
-# Default values for agentic-sdlc-runner
+# Default values for agentic-sdlc-agent-runner
 # This is a YAML-formatted file. Declare variables to be passed into your templates.
 
 # -- Global settings

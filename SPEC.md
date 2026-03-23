@@ -89,10 +89,10 @@ Enable local OpenCode CLI sessions to spawn and control remote AI agent pods run
 
 | Component | Purpose | Location |
 |-----------|---------|----------|
-| Helm Chart | K8s resources templating | `charts/agentic-sdlc-runner/` |
-| Release (Dev) | Dev environment values | `releases/agentic-sdlc-runner-dev/` |
-| Release (Stg) | Staging environment values | `releases/agentic-sdlc-runner-stg/` |
-| Release (Prod) | Production environment values | `releases/agentic-sdlc-runner-prod/` |
+| Helm Chart | K8s resources templating | `charts/agentic-sdlc-agent-runner/` |
+| Release (Dev) | Dev environment values | `releases/agentic-sdlc-agent-runner-dev/` |
+| Release (Stg) | Staging environment values | `releases/agentic-sdlc-agent-runner-stg/` |
+| Release (Prod) | Production environment values | `releases/agentic-sdlc-agent-runner-prod/` |
 
 ### 3.2 Helper Scripts
 
@@ -128,18 +128,18 @@ Deploy the runner using Helm:
 
 ```bash
 # Development
-helm upgrade --install agentic-sdlc-runner-dev \
-  releases/agentic-sdlc-runner-dev \
+helm upgrade --install agentic-sdlc-agent-runner-dev \
+  releases/agentic-sdlc-agent-runner-dev \
   -n agent-runner-dev --create-namespace
 
 # Staging
-helm upgrade --install agentic-sdlc-runner-stg \
-  releases/agentic-sdlc-runner-stg \
+helm upgrade --install agentic-sdlc-agent-runner-stg \
+  releases/agentic-sdlc-agent-runner-stg \
   -n agent-runner-stg --create-namespace
 
 # Production
-helm upgrade --install agentic-sdlc-runner-prod \
-  releases/agentic-sdlc-runner-prod \
+helm upgrade --install agentic-sdlc-agent-runner-prod \
+  releases/agentic-sdlc-agent-runner-prod \
   -n agent-runner-prod --create-namespace
 ```
 
@@ -182,17 +182,17 @@ kubectl logs -f -n "$NAMESPACE" "$POD_NAME"
 See `templates/pod-template.yaml` for the full pod spec template. Key features:
 
 ```yaml
-{{- define "agentic-sdlc-runner.podTemplate" -}}
+{{- define "agentic-sdlc-agent-runner.podTemplate" -}}
 restartPolicy: Never
-serviceAccountName: {{ include "agentic-sdlc-runner.serviceAccountName" . }}
+serviceAccountName: {{ include "agentic-sdlc-agent-runner.serviceAccountName" . }}
 containers:
   - name: agent
-    image: "{{ .Values.pod.image.repository }}:{{ include "agentic-sdlc-runner.imageTag" . }}"
+    image: "{{ .Values.pod.image.repository }}:{{ include "agentic-sdlc-agent-runner.imageTag" . }}"
     env:
       - name: OPENCODE_SERVER_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: {{ include "agentic-sdlc-runner.externalSecretName" . }}
+            name: {{ include "agentic-sdlc-agent-runner.externalSecretName" . }}
             key: server-password
       - name: GIT_REPO
         value: "{{ .Values.task.defaultRepo }}"
@@ -249,9 +249,9 @@ See `templates/namespace.yaml`:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ include "agentic-sdlc-runner.namespace" . }}
+  name: {{ include "agentic-sdlc-agent-runner.namespace" . }}
   labels:
-    {{- include "agentic-sdlc-runner.labels" . | nindent 4 }}
+    {{- include "agentic-sdlc-agent-runner.labels" . | nindent 4 }}
 {{- end }}
 ```
 
@@ -269,14 +269,14 @@ See `templates/external-secret.yaml`:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: {{ include "agentic-sdlc-runner.externalSecretName" . }}
+  name: {{ include "agentic-sdlc-agent-runner.externalSecretName" . }}
 spec:
   refreshInterval: {{ .Values.externalSecret.refreshInterval }}
   secretStoreRef:
     name: {{ .Values.externalSecret.secretStore.name }}
     kind: {{ .Values.externalSecret.secretStore.kind }}
   target:
-    name: {{ include "agentic-sdlc-runner.externalSecretName" . }}
+    name: {{ include "agentic-sdlc-agent-runner.externalSecretName" . }}
   data:
     - secretKey: server-password
       remoteRef:
@@ -316,13 +316,13 @@ CMD ["/bin/bash"]
 ## 8. Directory Structure
 
 ```
-agentic-sdlc-runner/
+agentic-sdlc-agent-runner/
 ├── SPEC.md                      # This file
 ├── PRD.md                       # Product requirements
 ├── docker/
 │   └── Dockerfile.opencode       # OpenCode container image
 ├── charts/
-│   └── agentic-sdlc-runner/  # Helm chart
+│   └── agentic-sdlc-agent-runner/  # Helm chart
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       ├── README.md
@@ -335,15 +335,15 @@ agentic-sdlc-runner/
 │           ├── external-secret.yaml
 │           └── pod-template.yaml
 ├── releases/
-│   ├── agentic-sdlc-runner-dev/
+│   ├── agentic-sdlc-agent-runner-dev/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml          # GitOps config
-│   ├── agentic-sdlc-runner-stg/
+│   ├── agentic-sdlc-agent-runner-stg/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml
 │   │   └── argocd.yaml
-│   └── agentic-sdlc-runner-prod/
+│   └── agentic-sdlc-agent-runner-prod/
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       └── argocd.yaml

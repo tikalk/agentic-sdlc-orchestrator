@@ -19,8 +19,8 @@ The script supports both **positional arguments** (for direct usage) and **CLI-s
 #### Usage (CLI-style - spec-kit Integration)
 ```bash
 ./spawn-pod.sh --task-id <id> --branch <branch> --repo <url> [--context-dir <dir>]
-# OR (when installed as 'agentic-sdlc-runner' command)
-agentic-sdlc-runner spawn --task-id <id> --branch <branch> --repo <url>
+# OR (when installed as 'agentic-sdlc-agent-runner' command)
+agentic-sdlc-agent-runner spawn --task-id <id> --branch <branch> --repo <url>
 ```
 
 #### Arguments
@@ -42,7 +42,7 @@ agentic-sdlc-runner spawn --task-id <id> --branch <branch> --repo <url>
 
 **Environment Variables:**
 - `NAMESPACE` - Kubernetes namespace (default: agent-runner)
-- `RELEASE_NAME` - Helm release name (default: agentic-sdlc-runner)
+- `RELEASE_NAME` - Helm release name (default: agentic-sdlc-agent-runner)
 - `SSH_SECRET_NAME` - Name of K8s secret containing SSH key (optional)
 - `ENVIRONMENT` - Environment to use: dev, stg, prod (default: dev)
 
@@ -77,7 +77,7 @@ ENVIRONMENT=prod NAMESPACE=agent-runner-prod ./spawn-pod.sh task-001 specs/featu
 4. Prints useful kubectl commands for monitoring
 
 #### spec-kit Integration
-When a task has `agent_type: agentic-sdlc-runner` in tasks_meta.json, spec-kit's `implement.sh` will:
+When a task has `agent_type: agentic-sdlc-agent-runner` in tasks_meta.json, spec-kit's `implement.sh` will:
 1. Detect the runner script at `./scripts/spawn-pod.sh`
 2. Call it with `--task-id`, `--branch`, `--repo`, and `--context-dir` flags
 3. Fall back to standard async delegation if the script is not found
@@ -118,9 +118,9 @@ NAMESPACE=agent-runner-prod ./tail-logs.sh agent-task-001
 
 1. **Deploy the Helm chart first:**
    ```bash
-   cd releases/agentic-sdlc-runner-dev
+   cd releases/agentic-sdlc-agent-runner-dev
    helm dependency update
-   helm upgrade --install agentic-sdlc-runner-dev . \
+   helm upgrade --install agentic-sdlc-agent-runner-dev . \
      -n agent-runner-dev --create-namespace
    ```
 

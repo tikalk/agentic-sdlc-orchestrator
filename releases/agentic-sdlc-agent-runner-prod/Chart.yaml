@@ -1,10 +1,10 @@
 ---
 apiVersion: v2
-name: agentic-sdlc-runner-prod
+name: agentic-sdlc-agent-runner-prod
 description: Production release of Agentic SDLC Runner
 type: application
 version: 0.1.0
 dependencies:
-  - name: agentic-sdlc-runner
+  - name: agentic-sdlc-agent-runner
     version: 0.1.0
-    repository: file://../../charts/agentic-sdlc-runner
+    repository: file://../../charts/agentic-sdlc-agent-runner
